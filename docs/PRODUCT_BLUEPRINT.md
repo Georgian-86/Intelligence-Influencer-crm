@@ -211,10 +211,13 @@ Scraped data refreshes on a schedule (e.g. weekly for active talent) and on dema
 
 ---
 
-## 10. Open decisions
+## 10. Decisions
 
-1. Stack confirmation (Next.js + Postgres/Supabase recommended vs. MERN from earlier notes).
-2. Should brands get a login in phase 1, or only an enquiry form?
-3. Brief visibility default: all eligible talent, or invite-only?
-4. Contact-reveal policy for partner agencies (on intent only vs. paid unlock).
-5. Final brand name and domain; colour direction (Black + Orange vs. Dark Blue + Neon).
+**Decided**
+- Stack: **Next.js (TypeScript) monorepo + Supabase** (Postgres, auth, row-level security, storage).
+- Brands in phase 1: **enquiry form only**; brand logins arrive in phase 2.
+- Brief visibility default: **all eligible approved talent** matching the brief criteria.
+
+**Still open**
+1. Contact-reveal policy for partner agencies (on intent only vs. paid unlock).
+2. Final brand name and domain; colour direction (Black + Orange vs. Dark Blue + Neon).
