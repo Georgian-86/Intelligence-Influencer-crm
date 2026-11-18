@@ -214,7 +214,10 @@ Scraped data refreshes on a schedule (e.g. weekly for active talent) and on dema
 ## 10. Decisions
 
 **Decided**
-- Stack: **Next.js (TypeScript) monorepo + Supabase** (Postgres, auth, row-level security, storage).
+- Stack: **Next.js (TypeScript) + Supabase** (Postgres, auth, row-level security, storage).
+  Phase 1 ships as one Next.js app with three areas (`/`, `/crm`, `/admin`), each with its own
+  role checks; they can be split into subdomains/apps later without changing the database.
+- Supabase project: `vigor-talent-network` (Mumbai, `ap-south-1`) in the second Supabase account.
 - Brands in phase 1: **enquiry form only**; brand logins arrive in phase 2.
 - Brief visibility default: **all eligible approved talent** matching the brief criteria.
 
