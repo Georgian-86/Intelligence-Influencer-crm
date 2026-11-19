@@ -8,7 +8,8 @@ import { Banner, EmptyState, SectionTitle, TalentHeader } from "@/components/tal
 import { StatusCard } from "@/components/talent/status-card";
 import { BriefCard } from "@/components/talent/brief-card";
 import { ApplicationUpdateRow, type TalentApplication } from "@/components/talent/application-card";
-import { profileCompletion, type TalentBrief } from "@/components/talent/model";
+import { type TalentBrief } from "@/components/talent/model";
+import { ProfileStrength } from "@/components/onboarding/profile-strength";
 import { createClient } from "@/lib/supabase/server";
 import { getMyTalent } from "@/lib/session";
 import { mismatches } from "@/lib/match";
@@ -25,7 +26,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   if (!talent) redirect("/onboarding");
   const approved = talent.status === "approved";
   const supabase = await createClient();
-  const [{ data: ig }, { data: intents }, { data: briefs }, { data: contact }, { count: mediaCount }] = await Promise.all([
+  const [{ data: ig }, { data: intents }, { data: briefs }, { data: contact }, { count: mediaCount }, { data: education }] = await Promise.all([
     supabase.from("social_accounts").select("*").eq("talent_id", talent.id).eq("platform", "instagram").maybeSingle(),
     supabase
       .from("intents")
@@ -37,6 +38,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       : Promise.resolve({ data: [] as never[] }),
     supabase.from("talent_contacts").select("phone, whatsapp").eq("talent_id", talent.id).maybeSingle(),
     supabase.from("talent_media").select("id", { count: "exact", head: true }).eq("talent_id", talent.id),
+    supabase.from("talent_education").select("college_id, college_name, course, graduation_year, verified_at").eq("talent_id", talent.id).maybeSingle(),
   ]);
   const { data: posts } = ig
     ? await supabase.from("social_posts").select("id, shortcode, post_type, url, caption, thumbnail_url, likes, comments, views")
@@ -50,13 +52,6 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const fresh = eligible.filter((b) => !applied.has(b.id));
   const active = apps.filter((i) => !["rejected", "dropped", "delivered"].includes(i.stage)).length;
   const confirmed = apps.filter((i) => i.stage === "confirmed" || i.stage === "delivered").length;
-
-  const completion = profileCompletion({
-    ...talent,
-    igOk: ig?.fetch_status === "ok",
-    mediaCount: mediaCount ?? 0,
-    hasPhone: !!(contact?.phone || contact?.whatsapp),
-  });
 
   const first = talent.display_name.split(" ")[0];
   const kind = [talent.is_influencer && "Creator", talent.is_event_talent && "Event talent"].filter(Boolean).join(" · ");
@@ -134,29 +129,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         </div>
 
         <aside className="min-w-0 space-y-6">
-          {/* ProfileStrength slot — the profile-strength meter component drops in here and replaces the hint below. */}
-          <section aria-labelledby="completion-title" className="card p-5">
-            <div className="flex items-center justify-between gap-3">
-              <h2 id="completion-title" className="font-bold text-fog">Profile completeness</h2>
-              <span className="font-display text-lg font-bold tabular-nums text-brand-2">{completion.pct}%</span>
-            </div>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-ink-4" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={completion.pct} aria-labelledby="completion-title">
-              <div className="h-full rounded-full bg-gradient-to-r from-brand to-brand-2" style={{ width: `${completion.pct}%` }} />
-            </div>
-            {completion.missing.length ? (
-              <>
-                <p className="mt-3 text-sm text-mute">Complete profiles get matched to more briefs. Next up:</p>
-                <ul className="mt-2 space-y-1.5 text-sm">
-                  {completion.missing.slice(0, 3).map((m) => (
-                    <li key={m} className="flex items-center gap-2 text-fog/90"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-brand" />{m}</li>
-                  ))}
-                </ul>
-                <Link href="/dashboard/profile" className="btn-ghost mt-4 min-h-11 w-full">Finish profile <ArrowRight className="h-4 w-4" aria-hidden /></Link>
-              </>
-            ) : (
-              <p className="mt-3 text-sm text-mute">Your profile is complete — nice. Keep rates and samples fresh.</p>
-            )}
-          </section>
+          <ProfileStrength talent={talent} contact={contact} instagram={ig} mediaCount={mediaCount ?? 0} education={education} />
 
           <section aria-labelledby="updates-title">
             <SectionTitle id="updates-title" title="Latest updates" href={apps.length ? "/dashboard/applications" : undefined} />

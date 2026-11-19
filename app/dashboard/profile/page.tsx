@@ -6,7 +6,6 @@ import { TalentForm } from "@/components/talent-form";
 import { InstagramIcon } from "@/components/brand/icons";
 import { Avatar } from "@/components/talent/shell";
 import { TalentHeader } from "@/components/talent/bits";
-import { profileCompletion } from "@/components/talent/model";
 import { createClient } from "@/lib/supabase/server";
 import { getMyTalent } from "@/lib/session";
 import { RANK_LABEL, type Rank } from "@/lib/constants";
@@ -21,12 +20,6 @@ export default async function EditProfile({ searchParams }: { searchParams: Prom
     supabase.from("social_accounts").select("handle").eq("talent_id", talent.id).eq("platform", "instagram").maybeSingle(),
     supabase.from("talent_media").select("url").eq("talent_id", talent.id).order("created_at"),
   ]);
-  const completion = profileCompletion({
-    ...talent,
-    igOk: !!ig?.handle,
-    mediaCount: media?.length ?? 0,
-    hasPhone: !!(contact?.phone || contact?.whatsapp),
-  });
   const kinds = [talent.is_influencer && "Creator", talent.is_event_talent && "Event talent"].filter(Boolean) as string[];
 
   return (
@@ -51,17 +44,6 @@ export default async function EditProfile({ searchParams }: { searchParams: Prom
                 </a>
               )}
             </div>
-          </div>
-          {/* ProfileStrength slot — the profile-strength meter replaces this local completeness hint later. */}
-          <div className="sm:w-56">
-            <div className="flex items-center justify-between text-xs">
-              <span id="pc-label" className="font-medium text-mute">Profile completeness</span>
-              <span className="font-display text-sm font-bold tabular-nums text-brand-2">{completion.pct}%</span>
-            </div>
-            <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-ink-4" role="progressbar" aria-labelledby="pc-label" aria-valuemin={0} aria-valuemax={100} aria-valuenow={completion.pct}>
-              <div className={clsx("h-full rounded-full", completion.pct === 100 ? "bg-ok" : "bg-gradient-to-r from-brand to-brand-2")} style={{ width: `${completion.pct}%` }} />
-            </div>
-            {completion.missing[0] && <p className="mt-1.5 text-xs text-mute">Next: {completion.missing[0]}</p>}
           </div>
         </div>
         <div className="flex items-start gap-2 border-t border-line bg-ink/40 px-5 py-3 text-xs text-mute">
