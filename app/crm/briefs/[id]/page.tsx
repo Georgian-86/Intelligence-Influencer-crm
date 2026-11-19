@@ -1,140 +1,89 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Badge, fmtINR, fmtNum } from "@/components/ui";
-import { createClient } from "@/lib/supabase/server";
+import { CircleCheck } from "lucide-react";
+import { Avatar, km } from "@/components/kit";
+import { BroadcastPanel } from "@/components/crm/broadcast-panel";
+import { MatchBar } from "@/components/crm/talent-explorer";
+import { PageHeader, RankBadge, StagePill } from "@/components/crm/ui";
+import { STAGE_LABEL, shortDate } from "@/components/crm/format";
+import { eligible, matchScore } from "@/components/crm/match-score";
 import { can, requireAgency } from "@/lib/session";
-import { searchPool } from "@/lib/pool";
-import { mismatches } from "@/lib/match";
-import { STAGES } from "@/lib/constants";
-import { inviteTalent, setBriefStatus, updateIntent } from "../../actions";
+import { WA_COST_PER_CONVERSATION } from "@/lib/demo/crm";
+import { inviteTalent, setBriefStatus } from "../../actions";
+import { getBriefDetail, listTalent } from "../../_lib/data";
 
-const COLUMNS: { title: string; stages: string[] }[] = [
-  { title: "Interested", stages: ["interested"] },
-  { title: "Shortlisted", stages: ["shortlisted"] },
-  { title: "Contacted / negotiating", stages: ["contacted", "negotiating"] },
-  { title: "Confirmed / delivered", stages: ["confirmed", "delivered"] },
-  { title: "Rejected / dropped", stages: ["rejected", "dropped"] },
-];
+const FUNNEL = ["interested", "shortlisted", "contacted", "negotiating", "confirmed", "delivered"] as const;
 
-type IntentRow = {
-  id: string; stage: string; source: string; message: string | null; quoted_rate: number | null; agreed_rate: number | null; created_at: string;
-  talent_profiles: { id: string; display_name: string; city: string | null; rank: string; social_accounts: { handle: string; followers: number | null; engagement_rate: number | null }[] } | null;
-};
-
-export default async function BriefPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function BriefDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string }> }) {
   const agency = await requireAgency();
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: b } = await supabase.from("briefs").select("*, campaigns(id, name)").eq("id", id).eq("org_id", agency.orgId).maybeSingle();
-  if (!b) notFound();
-  const { data } = await supabase
-    .from("intents")
-    .select("id, stage, source, message, quoted_rate, agreed_rate, created_at, talent_profiles(id, display_name, city, rank, social_accounts(handle, followers, engagement_rate))")
-    .eq("brief_id", id)
-    .order("created_at", { ascending: true });
-  const intents = (data ?? []) as unknown as IntentRow[];
-  const inPipeline = new Set(intents.map((i) => i.talent_profiles?.id));
+  const sp = await searchParams;
+  const [d, pool] = await Promise.all([getBriefDetail(id, agency.orgId), listTalent()]);
+  if (!d) notFound();
+  const b = d.brief;
+  const inPipe = new Map(d.cards.map((c) => [c.talentId, c]));
+  const matched = pool.filter((t) => eligible(b, t).length === 0).map((t) => ({ t, m: matchScore(b, t), card: inPipe.get(t.id) })).sort((x, y) => y.m - x.m);
+  const fresh = matched.filter((x) => !x.card);
   const manage = can(agency, "pipeline.manage");
-  const back = `/crm/briefs/${id}`;
-
-  const pool = manage ? await searchPool({ kind: b.talent_kind === "any" ? undefined : b.talent_kind, sort: "engagement" }, 2000) : [];
-  const suggestions = pool
-    .filter((t) => !inPipeline.has(t.id))
-    .filter((t) => mismatches(b, { ...t, followers: t.ig?.followers, engagement_rate: t.ig?.engagement_rate }).length === 0)
-    .slice(0, 25);
-  const campaign = b.campaigns as unknown as { id: string; name: string } | null;
+  const budget = b.budget_min || b.budget_max ? `₹${(b.budget_min ?? 0).toLocaleString("en-IN")}–${(b.budget_max ?? 0).toLocaleString("en-IN")}` : "Budget on request";
+  const criteria = [
+    b.talent_kind === "any" ? "Anyone" : b.talent_kind === "event" ? "Event talent" : "Influencers",
+    b.cities.length ? b.cities.join(", ") : "All cities",
+    b.colleges_only && "College students",
+    b.categories.length ? b.categories.join(", ") : null,
+    (b.min_followers || b.max_followers) && `${km(b.min_followers)}–${km(b.max_followers)} followers`,
+    b.min_engagement && `ER ${b.min_engagement}%+`,
+  ].filter(Boolean) as string[];
 
   return (
-    <div className="space-y-6">
-      <Link href={`/crm/campaigns/${campaign?.id}`} className="text-sm text-mute hover:text-fog">← {campaign?.name}</Link>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2"><h1 className="text-2xl font-bold">{b.title}</h1><Badge value={b.status} /></div>
-          <p className="mt-1 text-sm text-mute">
-            {b.brand_display || "Confidential brand"} · <span className="capitalize">{b.talent_kind}</span> · {b.cities.join(", ") || "All cities"}
-            {(b.min_followers || b.max_followers) && ` · ${fmtNum(b.min_followers)}–${fmtNum(b.max_followers)} followers`}
-            {b.min_engagement && ` · ≥${b.min_engagement}% ER`}
-            {(b.budget_min || b.budget_max) && ` · ${fmtINR(b.budget_min)}–${fmtINR(b.budget_max)}`}
-          </p>
-        </div>
-        {can(agency, "brief.manage") && (
-          <div className="flex gap-2">
-            {b.status !== "open" && <form action={setBriefStatus}><input type="hidden" name="id" value={b.id} /><input type="hidden" name="status" value="open" /><button className="btn-primary">Publish</button></form>}
-            {b.status === "open" && <form action={setBriefStatus}><input type="hidden" name="id" value={b.id} /><input type="hidden" name="status" value="closed" /><button className="btn-ghost">Close brief</button></form>}
-          </div>
+    <>
+      <PageHeader
+        back={d.campaign ? { href: `/crm/campaigns/${d.campaign.id}`, label: d.campaign.name } : { href: "/crm/briefs", label: "Briefs" }}
+        title={b.title}
+        subtitle={<>{b.brand} · {b.deliverables ?? "Deliverables TBC"} · {budget}{b.apply_by && <> · apply by {shortDate(b.apply_by)}</>}</>}
+        meta={<><span className={`chip capitalize ${b.status === "open" ? "border-ok/30 bg-ok-bg text-ok" : ""}`}>{b.status}</span>{criteria.map((c) => <span key={c} className="chip">{c}</span>)}</>}
+        actions={can(agency, "brief.manage") && (
+          <form action={setBriefStatus}>
+            <input type="hidden" name="id" value={b.id} /><input type="hidden" name="status" value={b.status === "open" ? "closed" : "open"} />
+            <button className={b.status === "open" ? "btn-ghost" : "btn-primary"}>{b.status === "open" ? "Close brief" : "Publish brief"}</button>
+          </form>
         )}
-      </div>
-      {(b.description || b.deliverables) && (
-        <details className="card p-4 text-sm"><summary className="cursor-pointer font-semibold">Brief details</summary>
-          <p className="mt-3 whitespace-pre-line text-mute">{b.description}</p>
-          {b.deliverables && <p className="mt-3 whitespace-pre-line"><span className="label">Deliverables</span>{b.deliverables}</p>}
-        </details>
-      )}
+      />
+      {sp.created && <p className="mb-5 flex items-center gap-2 rounded-[14px] bg-ok-bg px-4 py-3 text-[13.5px] font-medium text-ok"><CircleCheck className="h-4 w-4" /> Brief published. {matched.length} matching creators can see it now.</p>}
 
-      <div className="grid gap-4 xl:grid-cols-5">
-        {COLUMNS.map((col) => {
-          const items = intents.filter((i) => col.stages.includes(i.stage));
-          return (
-            <div key={col.title} className="rounded-2xl border border-line bg-ink-2/60 p-3">
-              <div className="mb-3 flex items-center justify-between text-sm font-semibold">{col.title}<span className="text-mute">{items.length}</span></div>
-              <div className="space-y-3">
-                {items.map((i) => {
-                  const t = i.talent_profiles;
-                  const ig = t?.social_accounts?.[0];
-                  return (
-                    <div key={i.id} className="rounded-xl border border-line bg-ink p-3 text-sm">
-                      <div className="flex items-start justify-between gap-2">
-                        <Link href={`/crm/talent/${t?.id}`} className="font-medium hover:text-brand">{t?.display_name}</Link>
-                        {i.source === "invited" && <span className="chip text-[10px]">Invited</span>}
-                      </div>
-                      <div className="mt-0.5 text-xs text-mute">
-                        {t?.city}{ig ? ` · @${ig.handle} · ${fmtNum(ig.followers)} · ${ig.engagement_rate ?? "—"}%` : ""}
-                      </div>
-                      {i.message && <p className="mt-2 line-clamp-3 text-xs text-mute">“{i.message}”</p>}
-                      <div className="mt-2 text-xs">Quote {fmtINR(i.quoted_rate)}{i.agreed_rate ? ` · Agreed ${fmtINR(i.agreed_rate)}` : ""}</div>
-                      {manage && (
-                        <form action={updateIntent} className="mt-2 flex flex-wrap gap-1.5">
-                          <input type="hidden" name="id" value={i.id} /><input type="hidden" name="back" value={back} />
-                          <select name="stage" defaultValue={i.stage} className="input w-full py-1 text-xs">
-                            {STAGES.map((s) => <option key={s} value={s}>{s}</option>)}
-                          </select>
-                          <input name="agreed_rate" defaultValue={i.agreed_rate ?? ""} placeholder="Agreed ₹" inputMode="numeric" className="input w-24 flex-1 py-1 text-xs" />
-                          <button className="btn-ghost px-2 py-1 text-xs">Save</button>
-                        </form>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {manage && (
-        <form action={inviteTalent} className="card p-5">
-          <input type="hidden" name="brief_id" value={b.id} /><input type="hidden" name="back" value={back} />
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <div className="font-semibold">Suggested from the pool</div>
-              <div className="text-xs text-mute">Approved talent matching this brief who aren&apos;t in the pipeline yet. Adding them shortlists them and unlocks contact details.</div>
-            </div>
-            {suggestions.length > 0 && <button className="btn-primary">Add selected to shortlist</button>}
+      <div className="mb-6 grid grid-cols-3 gap-2 sm:grid-cols-6">
+        {FUNNEL.map((s) => (
+          <div key={s} className="card px-3 py-2.5">
+            <div className="text-[11.5px] text-mute">{STAGE_LABEL[s]}</div>
+            <div className="font-display text-[22px] font-semibold tabular-nums">{d.cards.filter((c) => c.stage === s).length}</div>
           </div>
-          {suggestions.length === 0 ? <p className="text-sm text-mute">No additional matches right now.</p> : (
-            <div className="overflow-x-auto">
-              <table className="table w-full min-w-[640px]">
-                <thead><tr><th /><th>Talent</th><th>City</th><th>Instagram</th><th>Followers</th><th>Eng.</th><th>Rank</th></tr></thead>
+        ))}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-12">
+        <form action={inviteTalent} className="card overflow-hidden lg:col-span-8">
+          <input type="hidden" name="brief_id" value={b.id} /><input type="hidden" name="back" value={`/crm/briefs/${b.id}`} />
+          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
+            <div>
+              <h2 className="font-display text-[16px] font-semibold">Matched creators <span className="ml-1 font-sans text-[13px] font-semibold tabular-nums text-mute">{matched.length}</span></h2>
+              <p className="text-[12.5px] text-mute">Meet every criterion · {fresh.length} not in the pipeline yet</p>
+            </div>
+            {manage && fresh.length > 0 && <button className="btn-primary btn-sm">Shortlist selected</button>}
+          </header>
+          {matched.length === 0 ? <p className="p-5 text-[13.5px] text-mute">Nobody meets every criterion yet. Widen the cities or follower range.</p> : (
+            <div className="max-h-[620px] overflow-auto">
+              <table className="w-full min-w-[640px] text-[13.5px] [&_td]:border-t [&_td]:border-line [&_td]:px-4 [&_td]:py-2.5 [&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:bg-canvas-2/95 [&_th]:px-4 [&_th]:py-2.5 [&_th]:text-left [&_th]:text-[11px] [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-[0.08em] [&_th]:text-mute">
+                <thead><tr><th className="w-10"><span className="sr-only">Select</span></th><th>Creator</th><th className="!text-right">Followers</th><th className="!text-right">ER</th><th>Rank</th><th>Match</th><th>Pipeline</th></tr></thead>
                 <tbody>
-                  {suggestions.map((t) => (
-                    <tr key={t.id}>
-                      <td><input type="checkbox" name="talent_id" value={t.id} className="accent-[#ff6a1a]" /></td>
-                      <td><Link href={`/crm/talent/${t.id}`} className="hover:text-brand">{t.display_name}</Link></td>
-                      <td>{t.city}</td>
-                      <td className="text-mute">{t.ig ? `@${t.ig.handle}` : "—"}</td>
-                      <td>{fmtNum(t.ig?.followers)}</td>
-                      <td>{t.ig?.engagement_rate != null ? `${t.ig.engagement_rate}%` : "—"}</td>
-                      <td><Badge value={t.rank} /></td>
+                  {matched.map(({ t, m, card }) => (
+                    <tr key={t.id} className="hover:bg-canvas/60">
+                      <td>{manage && !card && <input type="checkbox" name="talent_id" value={t.id} aria-label={`Select ${t.name}`} className="h-4 w-4 accent-[var(--color-cobalt)]" />}</td>
+                      <td><Link href={`/crm/talent/${t.id}`} className="flex items-center gap-2.5"><Avatar name={t.name} hue={t.hue} size={28} /><span className="min-w-0 leading-tight"><span className="block font-semibold hover:text-cobalt-700">{t.name}</span><span className="block max-w-[220px] truncate text-[12px] text-mute">{t.city}{t.college ? ` · ${t.college}` : ""}</span></span></Link></td>
+                      <td className="text-right font-semibold tabular-nums">{km(t.followers)}</td>
+                      <td className="text-right tabular-nums text-ink-2">{t.er?.toFixed(1)}%</td>
+                      <td><RankBadge rank={t.rank} /></td>
+                      <td><MatchBar value={card?.match ?? m} /></td>
+                      <td>{card ? <StagePill stage={card.stage} /> : <span className="text-[12px] text-faint">Not invited</span>}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -142,7 +91,22 @@ export default async function BriefPage({ params }: { params: Promise<{ id: stri
             </div>
           )}
         </form>
-      )}
-    </div>
+
+        <aside className="min-w-0 space-y-6 lg:col-span-4">
+          <BroadcastPanel briefId={b.id} brand={b.brand} title={b.title} deliverables={b.deliverables ?? ""} budget={budget} applyBy={b.apply_by ? shortDate(b.apply_by) : "soon"} costPer={WA_COST_PER_CONVERSATION}
+            audiences={[
+              { key: "fresh", label: "Matched, not yet contacted", ids: fresh.map((x) => x.t.id) },
+              { key: "all", label: "All matched creators", ids: matched.map((x) => x.t.id) },
+              { key: "short", label: "Shortlisted only", ids: d.cards.filter((c) => c.stage === "shortlisted").map((c) => c.talentId) },
+            ]} />
+          {b.description && (
+            <section className="card p-5">
+              <h2 className="mb-2 font-display text-[16px] font-semibold">What creators see</h2>
+              <p className="text-[13.5px] leading-[1.55] text-ink-2">{b.description}</p>
+            </section>
+          )}
+        </aside>
+      </div>
+    </>
   );
 }
