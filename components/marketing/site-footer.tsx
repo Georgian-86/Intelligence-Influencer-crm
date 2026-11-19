@@ -12,7 +12,7 @@ const PRODUCT = [
 ];
 
 /** Rich footer on a night band: SEO links to every city page and the top campuses per city. */
-export function SiteFooter() {
+export function SiteFooter({ joinHref = "/join" }: { joinHref?: string }) {
   const topCampuses = CITY_INFO.slice(0, 6).flatMap((c) => collegesIn(c).slice(0, 2));
   return (
     <footer className="relative overflow-hidden border-t border-white/10 bg-night text-white">
@@ -25,7 +25,7 @@ export function SiteFooter() {
               Creators, college creators and event talent — matched to live brand campaigns.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
-              <Link href="/join" className="btn bg-white text-night hover:bg-ice">Join free</Link>
+              <Link href={joinHref} className="btn bg-white text-night hover:bg-ice">Join free</Link>
               <Link href="/brands" className="btn border border-white/20 text-white hover:border-white/45">Send a brief</Link>
             </div>
           </div>

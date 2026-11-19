@@ -84,7 +84,7 @@ export default function JoinPage() {
           </div>
         </div>
       </main>
-      <SiteFooter />
+      <SiteFooter joinHref="/register?type=influencer" />
     </>
   );
 }

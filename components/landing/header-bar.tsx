@@ -22,6 +22,10 @@ export function HeaderBar({ loggedIn = false }: { loggedIn?: boolean }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  // On /join itself, "Join free" would link to the page you're already on and do nothing.
+  const onJoin = pathname === "/join";
+  const joinHref = onJoin ? "/register?type=influencer" : "/join";
+  const joinLabel = onJoin ? "Sign up free" : "Join free";
   const btnRef = useRef<HTMLButtonElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
 
@@ -78,8 +82,8 @@ export function HeaderBar({ loggedIn = false }: { loggedIn?: boolean }) {
           <Link href={loggedIn ? "/dashboard" : "/login"} className="btn-quiet hidden sm:inline-flex">
             {loggedIn ? "Dashboard" : "Log in"}
           </Link>
-          <Link href="/join" className="btn-primary hidden sm:inline-flex">
-            Join free <ArrowUpRight className="h-4 w-4" aria-hidden />
+          <Link href={joinHref} className="btn-primary hidden sm:inline-flex">
+            {joinLabel} <ArrowUpRight className="h-4 w-4" aria-hidden />
           </Link>
           <button
             ref={btnRef}
@@ -110,7 +114,7 @@ export function HeaderBar({ loggedIn = false }: { loggedIn?: boolean }) {
         </nav>
         <div className="mt-2 grid grid-cols-2 gap-2 border-t border-line/70 pt-3">
           <Link href={loggedIn ? "/dashboard" : "/login"} onClick={() => setOpen(false)} className="btn-ghost h-12">{loggedIn ? "Dashboard" : "Log in"}</Link>
-          <Link href="/join" onClick={() => setOpen(false)} className="btn-primary h-12">Join free</Link>
+          <Link href={joinHref} onClick={() => setOpen(false)} className="btn-primary h-12">{joinLabel}</Link>
         </div>
       </div>
     </header>

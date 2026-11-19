@@ -24,7 +24,8 @@ export async function fetchInstagramPreview(input: string): Promise<PreviewResul
   const handle = parseInstagramHandle(input);
   if (!handle) return { ok: false, code: "invalid", error: "That doesn't look like an Instagram handle. Try something like @yourname." };
 
-  if (isDemo()) {
+  // Demo mode without an Apify token: show fixture data. With a token, fetch the real profile even in demo mode.
+  if (isDemo() && !process.env.APIFY_TOKEN) {
     await new Promise((r) => setTimeout(r, 1600));
     const inf = inferFromBio(ME.bio);
     const top = [...ME.posts].sort((a, b) => b.views - a.views).slice(0, 3);
@@ -40,6 +41,8 @@ export async function fetchInstagramPreview(input: string): Promise<PreviewResul
     };
   }
 
+  if (isDemo()) return livePreview(handle);
+
   const supabase = await createClient();
   const { data: claimed } = await supabase.from("social_accounts").select("id, talent_id").eq("platform", "instagram").eq("handle", handle).maybeSingle();
   const { data: mine } = await supabase.rpc("my_talent_id");
@@ -49,6 +52,10 @@ export async function fetchInstagramPreview(input: string): Promise<PreviewResul
   if (!process.env.APIFY_TOKEN) {
     return { ok: false, code: "unavailable", error: "We can't reach Instagram right now. Continue and we'll sync your stats in the background." };
   }
+  return livePreview(handle);
+}
+
+async function livePreview(handle: string): Promise<PreviewResult> {
   try {
     const preview = await previewInstagram(handle);
     if (preview.isPrivate) return { ok: false, code: "private", error: `@${handle} is private. Switch it to public (Settings → Account privacy) and try again, or continue and we'll sync later.` };
