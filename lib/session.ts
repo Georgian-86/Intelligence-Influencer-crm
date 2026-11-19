@@ -2,8 +2,10 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isDemo, DEMO_USER } from "@/lib/demo";
 
 export const getUser = cache(async () => {
+  if (isDemo()) return DEMO_USER as unknown as import("@supabase/supabase-js").User;
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   return data.user;
@@ -25,6 +27,14 @@ export type OrgAccess = {
 
 /** All org memberships of the current user with their permission sets. */
 export const getAccess = cache(async (): Promise<OrgAccess[]> => {
+  if (isDemo()) {
+    const all = new Set(["*"]);
+    return [
+      { orgId: "demo-platform", orgName: "Vigor Platform", orgType: "platform", role: "super_admin", perms: all },
+      { orgId: "demo-agency", orgName: "Vigor Launchpad", orgType: "agency", role: "agency_owner", perms: all },
+      { orgId: "demo-brand", orgName: "Domino's India", orgType: "brand", role: "brand_admin", perms: all },
+    ];
+  }
   const user = await getUser();
   if (!user) return [];
   const supabase = await createClient();
