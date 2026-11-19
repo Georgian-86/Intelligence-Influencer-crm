@@ -1,49 +1,39 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { clsx } from "clsx";
 import { ArrowRight, Check } from "lucide-react";
 
-/**
- * Large "app chooser" card. Pure CSS hover motion (transform/opacity only):
- * lift, glow fade-in, preview tilt and arrow nudge.
- */
-export function ChoiceCard({ href, eyebrow, title, desc, perks, cta, preview }: {
-  href: string; eyebrow: string; title: string; desc: string; perks: string[]; cta: string; preview: ReactNode;
+/** Large path card for /join. The whole card is one link; the preview is decorative. */
+export function ChoiceCard({ href, kicker, title, desc, perks, cta, preview, featured = false }: {
+  href: string; kicker: string; title: ReactNode; desc: string; perks: string[]; cta: string; preview: ReactNode; featured?: boolean;
 }) {
   return (
     <Link
       href={href}
-      className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-ink-2 shadow-[inset_0_1px_0_0_rgb(255_255_255/0.04)] transition-[transform,border-color] duration-300 ease-[cubic-bezier(.2,.8,.2,1)] hover:-translate-y-1 hover:border-brand/50 focus-visible:-translate-y-1 focus-visible:border-brand/50 active:translate-y-0 active:scale-[0.99]"
+      className={clsx(
+        "group relative flex h-full flex-col overflow-hidden rounded-[36px] border p-3 transition-[transform,box-shadow,border-color] duration-500 ease-out-expo hover:-translate-y-1.5",
+        featured ? "border-cobalt-600 bg-cobalt text-white shadow-glow hover:shadow-[0_30px_60px_-20px_rgb(43_75_255/.6)]" : "border-line bg-surface text-ink shadow-sm hover:border-line-2 hover:shadow-lg",
+      )}
     >
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100">
-        <div className="absolute -top-24 left-1/2 h-64 w-[130%] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(255_106_26/0.28),transparent)]" />
+      <div aria-hidden className={clsx("relative grid aspect-[16/11] place-items-center overflow-hidden rounded-[28px] p-5", featured ? "bg-cobalt-700/50" : "bg-canvas-2")}>
+        <div className="transition-transform duration-700 ease-out-expo group-hover:-translate-y-1 group-hover:scale-[1.02]">{preview}</div>
       </div>
-
-      {/* preview stage */}
-      <div aria-hidden="true" className="relative flex h-48 items-center justify-center overflow-hidden border-b border-line bg-ink/40 sm:h-56">
-        <div className="absolute inset-0 bg-[linear-gradient(rgb(255_255_255/0.035)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.035)_1px,transparent_1px)] bg-[size:28px_28px] [mask-image:radial-gradient(ellipse_at_center,#000_30%,transparent_75%)]" />
-        <div className="relative transition-transform duration-500 ease-[cubic-bezier(.2,.8,.2,1)] group-hover:-translate-y-1.5 group-hover:-rotate-[1.5deg] group-hover:scale-[1.04]">
-          {preview}
-        </div>
-      </div>
-
-      <div className="relative flex flex-1 flex-col p-6 sm:p-7">
-        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-2">{eyebrow}</span>
-        <h2 className="mt-2 text-2xl font-bold text-fog">{title}</h2>
-        <p className="mt-2 text-[15px] text-mute">{desc}</p>
-        <ul className="mt-5 space-y-2.5">
+      <div className="flex flex-1 flex-col px-4 pb-4 pt-6 sm:px-5">
+        <span className={clsx("text-[13px] font-medium", featured ? "text-white/75" : "text-cobalt")}>{kicker}</span>
+        <h2 className="mt-1.5 font-display text-[28px] font-bold leading-[1.05] tracking-[-0.035em]">{title}</h2>
+        <p className={clsx("mt-2 text-[15px] leading-relaxed", featured ? "text-white/80" : "text-ink-2")}>{desc}</p>
+        <ul className="mb-8 mt-5 space-y-2.5">
           {perks.map((p) => (
-            <li key={p} className="flex items-start gap-2.5 text-sm text-fog/90">
-              <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-ok/15 text-ok">
-                <Check className="h-3 w-3" aria-hidden="true" />
-              </span>
+            <li key={p} className={clsx("flex items-start gap-2.5 text-[14.5px]", featured ? "text-white/90" : "text-ink-2")}>
+              <span className={clsx("mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full", featured ? "bg-white/20 text-white" : "bg-cobalt-50 text-cobalt")}><Check className="h-3 w-3" aria-hidden /></span>
               {p}
             </li>
           ))}
         </ul>
-        <span className="mt-auto pt-7">
-          <span className="btn-primary min-h-12 w-full px-5 text-[15px]">
-            {cta}
-            <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
+        <span className={clsx("mt-auto inline-flex h-12 items-center justify-between rounded-full pl-5 pr-1.5 text-[15px] font-semibold transition-colors", featured ? "bg-white text-cobalt" : "bg-ink text-white group-hover:bg-night-3")}>
+          {cta}
+          <span className={clsx("grid h-9 w-9 place-items-center rounded-full transition-transform duration-300 ease-out-expo group-hover:translate-x-0.5", featured ? "bg-cobalt text-white" : "bg-white/15")}>
+            <ArrowRight className="h-4 w-4" aria-hidden />
           </span>
         </span>
       </div>

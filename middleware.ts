@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isDemo } from "@/lib/demo/mode";
 
 export async function middleware(request: NextRequest) {
   // Email links that fall back to the Site URL arrive as /?code=… — finish sign-in properly.
@@ -10,6 +11,8 @@ export async function middleware(request: NextRequest) {
     url.search = `?code=${encodeURIComponent(code)}&next=/onboarding`;
     return NextResponse.redirect(url);
   }
+  // Demo mode (no Supabase configured): every area is open with fixture data.
+  if (isDemo()) return NextResponse.next({ request });
   let response = NextResponse.next({ request });
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

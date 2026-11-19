@@ -1,16 +1,35 @@
 import { NextResponse, type NextRequest } from "next/server";
+import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { isDemo } from "@/lib/demo";
 
+/**
+ * Finishes Google OAuth (?code=) and email magic links (?code= or ?token_hash=&type=).
+ * New accounts without a talent profile always go to onboarding first.
+ */
 export async function GET(request: NextRequest) {
   const url = request.nextUrl;
-  const code = url.searchParams.get("code");
   const nextParam = url.searchParams.get("next") ?? "/dashboard";
   const next = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/dashboard";
-  if (code) {
-    const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(new URL(next, url.origin));
+  if (isDemo()) return NextResponse.redirect(new URL(next, url.origin));
+
+  const code = url.searchParams.get("code");
+  const tokenHash = url.searchParams.get("token_hash");
+  const type = url.searchParams.get("type") as EmailOtpType | null;
+  const supabase = await createClient();
+
+  let ok = false;
+  if (code) ok = !(await supabase.auth.exchangeCodeForSession(code)).error;
+  else if (tokenHash && type) ok = !(await supabase.auth.verifyOtp({ token_hash: tokenHash, type })).error;
+
+  if (ok) {
+    const { data: auth } = await supabase.auth.getUser();
+    if (auth.user && !next.startsWith("/onboarding") && !next.startsWith("/crm") && !next.startsWith("/admin")) {
+      const { data: talent } = await supabase.from("talent_profiles").select("id").eq("user_id", auth.user.id).maybeSingle();
+      if (!talent) return NextResponse.redirect(new URL("/onboarding", url.origin));
+    }
+    return NextResponse.redirect(new URL(next, url.origin));
   }
-  // Opened on another device/browser: the email is already confirmed, so just ask them to log in.
-  return NextResponse.redirect(new URL(`/login?confirmed=1&next=${encodeURIComponent(next)}`, url.origin));
+  // Link opened on another device/browser, or expired: ask them to sign in again.
+  return NextResponse.redirect(new URL(`/login?expired=1&next=${encodeURIComponent(next)}`, url.origin));
 }

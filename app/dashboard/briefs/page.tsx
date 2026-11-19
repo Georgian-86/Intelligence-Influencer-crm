@@ -1,52 +1,94 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Empty, PageHeader, fmtINR } from "@/components/ui";
-import { createClient } from "@/lib/supabase/server";
-import { getMyTalent } from "@/lib/session";
-import { mismatches } from "@/lib/match";
+import { clsx } from "clsx";
+import { Hourglass, Lock, SearchX } from "lucide-react";
+import { EmptyState } from "@/components/kit";
+import { MatchCard } from "@/components/creator/match-card";
+import { BrandTile } from "@/components/creator/bits";
+import { getBriefs, getCreator } from "../_lib/data";
+import { daysUntil } from "../_lib/score";
 
-export default async function TalentBriefs() {
-  const talent = await getMyTalent();
-  if (!talent) redirect("/onboarding");
-  if (talent.status !== "approved") {
-    return (<><PageHeader title="Open briefs" /><Empty title="Briefs unlock after approval">The Vigor team is reviewing your profile.</Empty></>);
+const FILTERS = [
+  { key: "all", label: "Best match" },
+  { key: "closing", label: "Closing soon" },
+  { key: "campus", label: "On campus" },
+  { key: "event", label: "Events" },
+  { key: "applied", label: "Applied" },
+] as const;
+
+export default async function Briefs({ searchParams }: { searchParams: Promise<{ f?: string }> }) {
+  const sp = await searchParams;
+  const f = FILTERS.some((x) => x.key === sp.f) ? sp.f! : "all";
+  const c = await getCreator();
+  if (!c) redirect("/onboarding");
+  const all = (await getBriefs(c)).filter((b) => b.status === "open");
+  const eligible = all.filter((b) => b.eligible);
+  const other = all.filter((b) => !b.eligible);
+  const list = eligible
+    .filter((b) => f === "all" || (f === "closing" ? (daysUntil(b.applyBy) ?? 99) <= 5 : f === "campus" ? b.collegesOnly : f === "event" ? b.talentKind !== "influencer" : !!b.applied))
+    .sort((a, b) => (f === "closing" ? (daysUntil(a.applyBy) ?? 99) - (daysUntil(b.applyBy) ?? 99) : b.match - a.match));
+  const count = (k: string) => eligible.filter((b) => k === "all" || (k === "closing" ? (daysUntil(b.applyBy) ?? 99) <= 5 : k === "campus" ? b.collegesOnly : k === "event" ? b.talentKind !== "influencer" : !!b.applied)).length;
+
+  if (c.status !== "approved") {
+    return (
+      <>
+        <Header n={0} />
+        <EmptyState title="Briefs unlock after approval" body="The Vigor team reviews every new profile, usually within 24 hours. We'll WhatsApp you when you're in." icon={<Hourglass className="h-5 w-5" />} />
+      </>
+    );
   }
-  const supabase = await createClient();
-  const [{ data: briefs }, { data: ig }, { data: mine }] = await Promise.all([
-    supabase.from("briefs").select("*").eq("status", "open").order("created_at", { ascending: false }),
-    supabase.from("social_accounts").select("followers, engagement_rate").eq("talent_id", talent.id).maybeSingle(),
-    supabase.from("intents").select("brief_id, stage").eq("talent_id", talent.id),
-  ]);
-  const applied = new Map((mine ?? []).map((i) => [i.brief_id, i.stage]));
-  const rows = (briefs ?? []).map((b) => ({ b, miss: mismatches(b, { ...talent, ...(ig ?? {}) }) }));
-  const eligible = rows.filter((r) => r.miss.length === 0);
 
   return (
     <>
-      <PageHeader title="Open briefs" subtitle={`${eligible.length} brief${eligible.length === 1 ? "" : "s"} match your profile`} />
-      {eligible.length === 0 ? (
-        <Empty title="No matching briefs right now">New campaigns are posted every week — check back soon.</Empty>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {eligible.map(({ b }) => (
-            <Link key={b.id} href={`/dashboard/briefs/${b.id}`} className="card block p-5 transition hover:border-brand">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <div className="text-xs uppercase tracking-wide text-brand">{b.brand_display || "Confidential brand"}</div>
-                  <div className="mt-1 font-semibold">{b.title}</div>
-                </div>
-                {applied.has(b.id) && <span className="chip border-ok/40 text-ok">Applied</span>}
-              </div>
-              <p className="mt-2 line-clamp-2 text-sm text-mute">{b.description}</p>
-              <div className="mt-3 flex flex-wrap gap-2 text-xs text-mute">
-                {b.cities.length > 0 && <span className="chip">{b.cities.join(", ")}</span>}
-                {(b.budget_min || b.budget_max) && <span className="chip">{fmtINR(b.budget_min)}–{fmtINR(b.budget_max)}</span>}
-                {b.apply_by && <span className="chip">Apply by {new Date(b.apply_by).toLocaleDateString("en-IN")}</span>}
-              </div>
+      <Header n={eligible.filter((b) => !b.applied).length} />
+      <nav aria-label="Filter briefs" className="-mx-4 mb-6 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+        {FILTERS.map((x) => {
+          const on = x.key === f;
+          return (
+            <Link key={x.key} href={x.key === "all" ? "/dashboard/briefs" : `/dashboard/briefs?f=${x.key}`} aria-current={on ? "page" : undefined}
+              className={clsx("inline-flex h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-[14px] font-medium transition-colors",
+                on ? "border-ink bg-ink text-white" : "border-line bg-surface text-ink-2 hover:border-line-2")}>
+              {x.label}<span className={clsx("tabular-nums text-[12.5px]", on ? "text-white/60" : "text-faint")}>{count(x.key)}</span>
             </Link>
-          ))}
-        </div>
+          );
+        })}
+      </nav>
+
+      {list.length ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{list.map((b) => <MatchCard key={b.id} b={b} />)}</div>
+      ) : (
+        <EmptyState title="Nothing here yet" body="Try another filter — or check back soon, new briefs drop every week." icon={<SearchX className="h-5 w-5" />} action={<Link href="/dashboard/briefs" className="btn-ghost">Show best matches</Link>} />
+      )}
+
+      {other.length > 0 && f === "all" && (
+        <section className="mt-12" aria-labelledby="other-h">
+          <h2 id="other-h" className="font-display text-[18px] font-semibold tracking-[-0.02em]">Not a fit yet</h2>
+          <p className="mt-0.5 text-[13.5px] text-mute">Open briefs you don&apos;t qualify for, and why. Update your profile if something&apos;s changed.</p>
+          <ul className="mt-4 divide-y divide-line overflow-hidden rounded-[20px] border border-line bg-surface">
+            {other.map((b) => (
+              <li key={b.id}>
+                <Link href={`/dashboard/briefs/${b.id}`} className="flex items-center gap-3 px-4 py-3.5 hover:bg-canvas/70">
+                  <BrandTile name={b.brand} hue={b.hue} size={36} className="opacity-70" />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[14.5px] font-medium">{b.title}</div>
+                    <div className="truncate text-[12.5px] text-mute">{b.checks.filter((x) => !x.ok).map((x) => x.label).join(" · ")}</div>
+                  </div>
+                  <Lock className="h-4 w-4 shrink-0 text-faint" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </>
+  );
+}
+
+function Header({ n }: { n: number }) {
+  return (
+    <div className="mb-6">
+      <h1 className="font-display text-[34px] font-bold leading-tight tracking-[-0.04em] sm:text-[40px]">Briefs</h1>
+      <p className="mt-1 text-[15px] text-mute">{n ? `${n} open brief${n === 1 ? "" : "s"} match your profile.` : "Live campaigns from Vigor's brands."}</p>
+    </div>
   );
 }

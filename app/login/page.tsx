@@ -1,28 +1,20 @@
-import Link from "next/link";
-import { SiteHeader } from "@/components/site-header";
-import { Field, Notice } from "@/components/ui";
-import { signIn } from "@/app/auth-actions";
+import type { Metadata } from "next";
+import { AuthScreen } from "@/components/onboarding/auth-screen";
+import { isDemo } from "@/lib/demo";
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string; checkEmail?: string; confirmed?: string }> }) {
+export const metadata: Metadata = { title: "Log in", alternates: { canonical: "/login" }, robots: { index: false } };
+
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string; checkEmail?: string; confirmed?: string; expired?: string }> }) {
   const sp = await searchParams;
-  return (
-    <>
-      <SiteHeader />
-      <main className="mx-auto max-w-md px-4 py-14">
-        <h1 className="text-3xl font-black tracking-tight">Log in</h1>
-        <form action={signIn} className="card mt-6 space-y-4 p-6">
-          {sp.checkEmail && <Notice kind="ok">Check your inbox and confirm your email, then log in here.</Notice>}
-          {sp.confirmed && <Notice kind="ok">Your email is confirmed. Log in to continue.</Notice>}
-          {sp.error && <Notice kind="error">{sp.error}</Notice>}
-          <input type="hidden" name="next" value={sp.next ?? "/dashboard"} />
-          <Field label="Email"><input name="email" type="email" required className="input" autoComplete="email" /></Field>
-          <Field label="Password"><input name="password" type="password" required className="input" autoComplete="current-password" /></Field>
-          <button className="btn-primary w-full">Log in</button>
-          <p className="text-center text-sm text-mute">
-            New here? <Link href="/join" className="text-brand hover:underline">Join the network</Link>
-          </p>
-        </form>
-      </main>
-    </>
-  );
+  const next = sp.next?.startsWith("/") && !sp.next.startsWith("//") ? sp.next : "/dashboard";
+  const notice = sp.error
+    ? { kind: "error" as const, text: sp.error }
+    : sp.expired
+      ? { kind: "error" as const, text: "That sign-in link has expired or was opened on another device. Sign in again below." }
+      : sp.checkEmail
+        ? { kind: "ok" as const, text: "Check your inbox and confirm your email, then sign in here." }
+        : sp.confirmed
+          ? { kind: "ok" as const, text: "Your email is confirmed. Sign in to continue." }
+          : null;
+  return <AuthScreen mode="login" next={next} type="influencer" demo={isDemo()} notice={notice} />;
 }

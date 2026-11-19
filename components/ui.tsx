@@ -15,7 +15,7 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+        <h1 className="text-[28px] font-bold leading-tight tracking-[-0.035em]">{title}</h1>
         {subtitle && <p className="mt-1 text-sm text-mute">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
@@ -24,28 +24,31 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
 }
 
 const tone: Record<string, string> = {
-  pending: "border-warn/40 text-warn",
-  screening: "border-info/40 text-info",
-  approved: "border-ok/40 text-ok",
-  rejected: "border-bad/40 text-bad",
-  suspended: "border-bad/40 text-bad",
-  draft: "border-line text-mute",
-  open: "border-ok/40 text-ok",
-  closed: "border-line text-mute",
-  interested: "border-info/40 text-info",
-  shortlisted: "border-brand/50 text-brand",
-  contacted: "border-brand/50 text-brand-2",
-  negotiating: "border-warn/40 text-warn",
-  confirmed: "border-ok/40 text-ok",
-  delivered: "border-ok/60 text-ok",
-  dropped: "border-line text-mute",
-  bronze: "border-bronze/50 bg-bronze/10 text-bronze",
-  silver: "border-silver/40 bg-silver/10 text-silver",
-  gold: "border-gold/50 bg-gold/10 text-gold",
-  platinum: "border-platinum/50 bg-platinum/10 text-platinum",
-  new: "border-brand/50 text-brand",
-  in_progress: "border-info/40 text-info",
-  converted: "border-ok/40 text-ok",
+  pending: "border-transparent bg-warn-bg text-warn",
+  screening: "border-transparent bg-info-bg text-info",
+  approved: "border-transparent bg-ok-bg text-ok",
+  rejected: "border-transparent bg-bad-bg text-bad",
+  suspended: "border-transparent bg-bad-bg text-bad",
+  draft: "border-line bg-canvas text-mute",
+  open: "border-transparent bg-ok-bg text-ok",
+  closed: "border-line bg-canvas text-mute",
+  planning: "border-line bg-canvas text-ink-2",
+  active: "border-transparent bg-cobalt-50 text-cobalt-700",
+  completed: "border-transparent bg-ok-bg text-ok",
+  interested: "border-transparent bg-info-bg text-info",
+  shortlisted: "border-transparent bg-cobalt-50 text-cobalt-700",
+  contacted: "border-transparent bg-cobalt-100 text-cobalt-800",
+  negotiating: "border-transparent bg-warn-bg text-warn",
+  confirmed: "border-transparent bg-ok-bg text-ok",
+  delivered: "border-transparent bg-ok text-white",
+  dropped: "border-line bg-canvas text-mute",
+  bronze: "border-bronze/30 bg-[#f6ebe1] text-bronze",
+  silver: "border-silver/30 bg-[#eef0f4] text-silver",
+  gold: "border-gold/30 bg-[#fbf3d9] text-gold",
+  platinum: "border-platinum/30 bg-[#e1f3f8] text-platinum",
+  new: "border-transparent bg-flame-50 text-flame-700",
+  in_progress: "border-transparent bg-info-bg text-info",
+  converted: "border-transparent bg-ok-bg text-ok",
 };
 
 export function Badge({ value, label }: { value: string; label?: string }) {
@@ -55,8 +58,8 @@ export function Badge({ value, label }: { value: string; label?: string }) {
 export function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
   return (
     <div className="card p-4">
-      <div className="text-xs uppercase tracking-wide text-mute">{label}</div>
-      <div className="mt-1 text-2xl font-bold tabular-nums">{value}</div>
+      <div className="text-[12px] font-medium text-mute">{label}</div>
+      <div className="mt-1.5 font-display text-[28px] font-bold leading-none tracking-[-0.03em] tabular-nums">{value}</div>
       {hint && <div className="mt-0.5 text-xs text-mute">{hint}</div>}
     </div>
   );
@@ -65,15 +68,15 @@ export function Stat({ label, value, hint }: { label: string; value: ReactNode; 
 export function Empty({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <div className="card flex flex-col items-center gap-2 p-10 text-center">
-      <div className="font-semibold">{title}</div>
+      <div className="font-display text-lg font-semibold">{title}</div>
       {children && <div className="text-sm text-mute">{children}</div>}
     </div>
   );
 }
 
 export function Notice({ kind = "info", children }: { kind?: "info" | "error" | "ok"; children: ReactNode }) {
-  const c = kind === "error" ? "border-bad/40 bg-bad/10 text-bad" : kind === "ok" ? "border-ok/40 bg-ok/10 text-ok" : "border-info/30 bg-info/10 text-info";
-  return <div className={`rounded-lg border px-3 py-2 text-sm ${c}`}>{children}</div>;
+  const c = kind === "error" ? "bg-bad-bg text-bad" : kind === "ok" ? "bg-ok-bg text-ok" : "bg-info-bg text-info";
+  return <div role={kind === "error" ? "alert" : "status"} className={`rounded-[12px] px-3.5 py-2.5 text-sm ${c}`}>{children}</div>;
 }
 
 export function CheckGroup({ name, options, selected = [], columns = 2 }: { name: string; options: readonly string[]; selected?: string[]; columns?: number }) {
@@ -81,7 +84,7 @@ export function CheckGroup({ name, options, selected = [], columns = 2 }: { name
     <div className={`grid gap-1.5 ${columns === 3 ? "sm:grid-cols-3" : columns === 1 ? "" : "sm:grid-cols-2"}`}>
       {options.map((o) => (
         <label key={o} className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name={name} value={o} defaultChecked={selected.includes(o)} className="accent-brand" />
+          <input type="checkbox" name={name} value={o} defaultChecked={selected.includes(o)} className="accent-cobalt" />
           {o}
         </label>
       ))}

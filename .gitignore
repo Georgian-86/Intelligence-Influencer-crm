@@ -1,4 +1,4 @@
-node_modules/
+node_modules
 .next/
 out/
 .env
@@ -10,3 +10,4 @@ next-env.d.ts
 # subagent git worktrees
 .claude/worktrees/
 .arena/
+__pycache__/

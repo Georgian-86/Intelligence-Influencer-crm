@@ -1,60 +1,101 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Empty, PageHeader, fmtINR } from "@/components/ui";
-import { createClient } from "@/lib/supabase/server";
-import { getMyTalent } from "@/lib/session";
+import { clsx } from "clsx";
+import { CircleCheck, Clock, IndianRupee, ListChecks, Wallet } from "lucide-react";
+import { EmptyState } from "@/components/kit";
+import { BrandTile, StageChip } from "@/components/creator/bits";
+import { StageTracker } from "@/components/creator/cards";
+import { SubmissionBox } from "@/components/creator/submission-box";
+import { getApplications, getCreator, getEarnings } from "../_lib/data";
+import { relTime } from "../_lib/score";
 import { withdrawInterest } from "../actions";
+import type { PaymentStatus } from "../_lib/types";
 
-const talentStage: Record<string, [string, string]> = {
-  interested: ["Applied", "border-info/40 text-info"],
-  shortlisted: ["Shortlisted", "border-brand/50 text-brand"],
-  contacted: ["In discussion", "border-brand/50 text-brand"],
-  negotiating: ["In discussion", "border-warn/40 text-warn"],
-  confirmed: ["Confirmed", "border-ok/40 text-ok"],
-  delivered: ["Completed", "border-ok/40 text-ok"],
-  rejected: ["Not selected", "border-line text-mute"],
-  dropped: ["Closed", "border-line text-mute"],
+const PAY: Record<PaymentStatus, { label: string; tone: string; icon: typeof Clock }> = {
+  not_started: { label: "Fee agreed after confirmation", tone: "text-mute", icon: Clock },
+  awaiting_delivery: { label: "Released after content goes live", tone: "text-ink-2", icon: Clock },
+  invoice_due: { label: "Send your invoice to Vigor", tone: "text-warn", icon: Wallet },
+  processing: { label: "Payout processing", tone: "text-info", icon: Clock },
+  paid: { label: "Paid to your account", tone: "text-ok", icon: CircleCheck },
 };
 
 export default async function Applications() {
-  const talent = await getMyTalent();
-  if (!talent) redirect("/onboarding");
-  const supabase = await createClient();
-  const { data: intents } = await supabase
-    .from("intents")
-    .select("id, stage, source, quoted_rate, created_at, brief_id, briefs(title, brand_display)")
-    .eq("talent_id", talent.id)
-    .order("created_at", { ascending: false });
+  const c = await getCreator();
+  if (!c) redirect("/onboarding");
+  const apps = await getApplications(c);
+  const e = getEarnings(apps);
+  const live = apps.filter((a) => !["rejected", "dropped"].includes(a.stage) && a.payment !== "paid");
+  const done = apps.filter((a) => !live.includes(a));
 
   return (
     <>
-      <PageHeader title="My applications" />
-      {!intents?.length ? (
-        <Empty title="No applications yet"><Link href="/dashboard/briefs" className="text-brand hover:underline">Browse open briefs</Link></Empty>
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-[34px] font-bold leading-tight tracking-[-0.04em] sm:text-[40px]">Applications</h1>
+          <p className="mt-1 text-[15px] text-mute">Every collab you&apos;ve raised your hand for, and exactly what happens next.</p>
+        </div>
+        <div className="flex gap-3">
+          <div className="rounded-[16px] border border-line bg-surface px-4 py-2.5 shadow-xs"><div className="text-[12px] text-mute">Paid</div><div className="font-display text-[20px] font-bold tabular-nums">₹{e.paid.toLocaleString("en-IN")}</div></div>
+          <div className="rounded-[16px] border border-line bg-surface px-4 py-2.5 shadow-xs"><div className="text-[12px] text-mute">On the way</div><div className="font-display text-[20px] font-bold tabular-nums text-ok">₹{e.pending.toLocaleString("en-IN")}</div></div>
+        </div>
+      </div>
+
+      {!apps.length ? (
+        <EmptyState title="No applications yet" body="Tap “I'm interested” on a brief and track it here — from shortlist to payout." icon={<ListChecks className="h-5 w-5" />} action={<Link href="/dashboard/briefs" className="btn-primary">Browse briefs</Link>} />
       ) : (
-        <div className="card overflow-x-auto">
-          <table className="table w-full">
-            <thead><tr><th>Brief</th><th>Status</th><th>Your fee</th><th>Date</th><th /></tr></thead>
-            <tbody>
-              {intents.map((i) => {
-                const b = i.briefs as unknown as { title: string; brand_display: string | null } | null;
-                const [label, cls] = talentStage[i.stage];
-                return (
-                  <tr key={i.id}>
-                    <td><div className="font-medium">{b?.title ?? "Brief closed"}</div><div className="text-xs text-mute">{b?.brand_display ?? ""}{i.source === "invited" ? " · Invited by Vigor" : ""}</div></td>
-                    <td><span className={`chip ${cls}`}>{label}</span></td>
-                    <td>{fmtINR(i.quoted_rate)}</td>
-                    <td className="text-mute">{new Date(i.created_at).toLocaleDateString("en-IN")}</td>
-                    <td>
-                      {i.stage === "interested" && (
-                        <form action={withdrawInterest}><input type="hidden" name="intent_id" value={i.id} /><button className="text-xs text-mute hover:text-bad">Withdraw</button></form>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="space-y-8">
+          {[{ title: "In progress", list: live }, { title: "Completed & closed", list: done }].filter((g) => g.list.length).map((g) => (
+            <section key={g.title} aria-label={g.title}>
+              <h2 className="mb-3 text-[13px] font-semibold text-mute">{g.title} <span className="tabular-nums text-faint">{g.list.length}</span></h2>
+              <div className="space-y-4">
+                {g.list.map((a) => {
+                  const pay = PAY[a.payment];
+                  const PayIcon = pay.icon;
+                  return (
+                    <article key={a.id} id={a.id} className="card scroll-mt-24 p-5 sm:p-6">
+                      <div className="flex items-start gap-4">
+                        <BrandTile name={a.brand} hue={a.hue} size={48} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Link href={`/dashboard/briefs/${a.briefId}`} className="font-display text-[18px] font-semibold tracking-[-0.02em] hover:text-cobalt-700">{a.title}</Link>
+                            <StageChip stage={a.payment === "paid" ? "delivered" : a.stage} />
+                          </div>
+                          <div className="mt-0.5 text-[13px] text-mute">{a.brand}{a.source === "invited" ? " · Invited by Vigor" : ""} · updated <span suppressHydrationWarning>{relTime(a.updatedAt)}</span></div>
+                        </div>
+                        {a.fee != null && (
+                          <div className="hidden text-right sm:block">
+                            <div className="text-[12px] text-mute">Your fee</div>
+                            <div className="font-display text-[20px] font-bold tabular-nums">₹{a.fee.toLocaleString("en-IN")}</div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-5"><StageTracker a={a} /></div>
+
+                      <div className={clsx("mt-5 rounded-[14px] px-4 py-3 text-[14px]", a.stage === "confirmed" ? "bg-cobalt-50 text-cobalt-800" : "bg-canvas text-ink-2")}>
+                        <span className="font-semibold">Next: </span>{a.next}
+                      </div>
+
+                      {a.stage === "confirmed" && <div className="mt-4"><SubmissionBox due={a.deliverableDue} what={a.deliverables} /></div>}
+
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 text-[13.5px]">
+                        <span className={clsx("inline-flex items-center gap-2 font-medium", pay.tone)}>
+                          <PayIcon className="h-4 w-4" />{pay.label}
+                          {a.fee != null && <span className="inline-flex items-center font-display font-bold tabular-nums text-ink sm:hidden"><IndianRupee className="h-3.5 w-3.5" />{a.fee.toLocaleString("en-IN")}</span>}
+                        </span>
+                        {a.stage === "interested" && (
+                          <form action={withdrawInterest}>
+                            <input type="hidden" name="intent_id" value={a.id} />
+                            <button className="btn-quiet btn-sm min-h-11 text-mute hover:text-bad">Withdraw</button>
+                          </form>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
         </div>
       )}
     </>
