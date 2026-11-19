@@ -53,6 +53,10 @@ export async function sendPhoneOtp(phone: string): Promise<Result & { phone?: st
   if (!wa.error) return { ok: true, phone: e164, channel: "whatsapp" };
   const sms = await supabase.auth.signInWithOtp({ phone: e164 });
   if (!sms.error) return { ok: true, phone: e164, channel: "sms" };
+  console.error("[auth] phone OTP failed", { whatsapp: wa.error?.message, sms: sms.error?.message });
+  if (/provider|disabled|not enabled|unsupported|sms_send_failed|twilio/i.test(`${wa.error?.message} ${sms.error?.message}`)) {
+    return { ok: false, error: "Phone sign-in isn't switched on yet. Use email instead for now." };
+  }
   return { ok: false, error: "Couldn't send a code to that number. Try again in a minute." };
 }
 
@@ -85,7 +89,10 @@ export async function sendMagicLink(email: string, next: string): Promise<Result
     email: e,
     options: { emailRedirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(safeNext(next, "/onboarding"))}` },
   });
-  if (error) return { ok: false, error: error.message.includes("rate") ? "Too many attempts. Wait a minute and try again." : "Couldn't send the link. Try again." };
+  if (error) {
+    console.error("[auth] magic link failed", error.message);
+    return { ok: false, error: error.message.includes("rate") ? "Too many attempts. Wait a minute and try again." : "Couldn't send the link. Try again." };
+  }
   return { ok: true };
 }
 
@@ -97,7 +104,11 @@ export async function signIn(formData: FormData) {
   if (isDemo()) redirect(next);
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) redirect(`/login?error=${encodeURIComponent("Email or password is incorrect.")}&next=${encodeURIComponent(next)}`);
+  if (error) {
+    console.error("[auth] password sign-in failed", error.code, error.message);
+    const msg = /not confirmed/i.test(error.message) ? "Confirm your email first: open the link we sent you." : "Email or password is incorrect.";
+    redirect(`/login?error=${encodeURIComponent(msg)}&next=${encodeURIComponent(next)}`);
+  }
   redirect(next);
 }
 
@@ -118,7 +129,10 @@ export async function signUp(formData: FormData) {
     password,
     options: { data: { full_name: fullName }, emailRedirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(`/onboarding?type=${type}`)}` },
   });
-  if (error) redirect(`${back}&error=${encodeURIComponent(error.message)}`);
+  if (error) {
+    console.error("[auth] sign-up failed", error.code, error.message);
+    redirect(`${back}&error=${encodeURIComponent(error.message)}`);
+  }
   if (!data.session) redirect(`/login?checkEmail=1`);
   redirect(`/onboarding?type=${type}`);
 }

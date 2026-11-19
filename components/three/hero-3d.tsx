@@ -26,7 +26,7 @@ export function HeroPoster({ className }: { className?: string }) {
 /**
  * Lazy WebGL hero. Mount order: poster (SSR) → after load + idle, the three.js chunk → fade in on
  * first frame. Rendering pauses when off-screen or the tab is hidden. Skipped entirely under
- * prefers-reduced-motion, without WebGL, or on devices reporting < 4GB memory.
+ * prefers-reduced-motion, without WebGL, or on devices reporting < 2GB memory.
  */
 export function Hero3D({ className }: { className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -43,7 +43,7 @@ export function Hero3D({ className }: { className?: string }) {
       const c = document.createElement("canvas");
       webgl = !!(c.getContext("webgl2") || c.getContext("webgl"));
     } catch { webgl = false; }
-    if (reduce || !webgl || (mem !== undefined && mem < 4)) return;
+    if (reduce || !webgl || (mem !== undefined && mem < 2)) return;
 
     let idle: number | undefined;
     const start = () => {
@@ -72,7 +72,7 @@ export function Hero3D({ className }: { className?: string }) {
   }, []);
 
   return (
-    <div ref={ref} className={clsx("relative", className)} aria-hidden>
+    <div ref={ref} className={className ?? "relative"} aria-hidden>
       <HeroPoster className={clsx("transition-opacity duration-700", ready ? "opacity-0" : "opacity-100")} />
       {enabled && (
         <div className={clsx("absolute inset-0 transition-opacity duration-1000 ease-out-expo", ready ? "opacity-100" : "opacity-0")}>
