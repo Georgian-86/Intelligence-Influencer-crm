@@ -40,6 +40,39 @@ npm run dev
 Apply the SQL files in `supabase/migrations/` in order (Supabase SQL editor or `supabase db push`).
 The live project `vigor-talent-network` (Mumbai) already has all migrations applied.
 
+`0005_v2_onboarding.sql` adds the college directory (`colleges`, ~190 seeded Indian colleges) and
+`talent_education`. The seed is generated from `lib/colleges-data.ts`: edit that file, then run
+`node scripts/seed-colleges.mjs` to rewrite the seed block. Until 0005 is applied, `/api/colleges`
+serves the same list from code, so onboarding never blocks.
+
+### Google sign-in
+
+`/login` and `/register` offer **Continue with Google** (Supabase OAuth, PKCE). The email flow stays as a fallback.
+
+1. **Google Cloud Console** → APIs & Services → Credentials → *Create credentials → OAuth client ID*
+   (type **Web application**). Configure the OAuth consent screen first if asked (app name, support email,
+   scopes `email`, `profile`, `openid`).
+   - **Authorized JavaScript origins:** your site URL, e.g. `https://vigor-talent-network.vercel.app`
+     (and `http://localhost:3000` for local dev).
+   - **Authorized redirect URI:** `https://<project-ref>.supabase.co/auth/v1/callback`
+     (shown in Supabase under Auth → Sign In / Providers → Google as "Callback URL").
+2. **Supabase dashboard** → Authentication → Sign In / Providers → **Google** → enable, paste the
+   **Client ID** and **Client secret**, save.
+3. **Supabase dashboard** → Authentication → URL Configuration:
+   - **Site URL:** your production URL.
+   - **Redirect URLs:** add `https://<your-domain>/auth/callback` and `http://localhost:3000/auth/callback`
+     (wildcards such as `https://*-yourteam.vercel.app/auth/callback` work for preview deploys).
+
+The app sends users back to `/auth/callback`, which exchanges the code for a session and routes first-time
+users (no talent profile, no team membership) to `/onboarding`. Google's `full_name` pre-fills the name step.
+
+### Onboarding notes
+
+- City is pre-filled from `x-vercel-ip-city` (Vercel) or `cf-ipcity` (Cloudflare) when present.
+- The Instagram preview calls Apify via `/api/ig-preview` (signed-in users only, throttled per user,
+  25 s timeout). If Apify is slow, the account is private or `APIFY_TOKEN` is missing, onboarding continues
+  and the account syncs in the background after sign-up.
+
 ### First admin
 
 1. Sign up on the site (any flow) with your email.

@@ -45,7 +45,23 @@ type ApifyProfile = {
   errorDescription?: string;
 };
 
-export async function fetchInstagramProfile(handle: string): Promise<ApifyProfile> {
+type FetchOpts = {
+  /** Abort the Apify call after this many ms (default: Apify's own 120 s run timeout). */
+  timeoutMs?: number;
+  /** Reuse a profile fetched by this server instance within this window (default 0 = always fetch). */
+  maxAgeMs?: number;
+};
+
+// Small per-instance cache so the onboarding preview and the post-signup sync don't pay Apify twice.
+const profileCache = new Map<string, { at: number; profile: ApifyProfile }>();
+const CACHE_LIMIT = 200;
+
+export async function fetchInstagramProfile(handle: string, opts: FetchOpts = {}): Promise<ApifyProfile> {
+  const key = handle.toLowerCase();
+  if (opts.maxAgeMs) {
+    const hit = profileCache.get(key);
+    if (hit && Date.now() - hit.at < opts.maxAgeMs) return hit.profile;
+  }
   const actor = process.env.APIFY_INSTAGRAM_ACTOR || "apify~instagram-profile-scraper";
   const res = await fetch(
     `https://api.apify.com/v2/acts/${actor}/run-sync-get-dataset-items?timeout=120`,
@@ -57,6 +73,7 @@ export async function fetchInstagramProfile(handle: string): Promise<ApifyProfil
       },
       body: JSON.stringify({ usernames: [handle] }),
       cache: "no-store",
+      signal: opts.timeoutMs ? AbortSignal.timeout(opts.timeoutMs) : undefined,
     },
   );
   if (!res.ok) throw new Error(`Apify request failed (${res.status})`);
@@ -65,7 +82,43 @@ export async function fetchInstagramProfile(handle: string): Promise<ApifyProfil
   if (!profile || profile.error) {
     throw new Error(profile?.errorDescription || profile?.error || "Profile not found or not public");
   }
+  if (profileCache.size >= CACHE_LIMIT) profileCache.delete(profileCache.keys().next().value!);
+  profileCache.set(key, { at: Date.now(), profile });
   return profile;
+}
+
+/** Public, display-safe subset of a fetched profile for the onboarding preview card. */
+export type InstagramPreview = {
+  handle: string;
+  fullName: string | null;
+  biography: string | null;
+  profilePicUrl: string | null;
+  followers: number | null;
+  following: number | null;
+  posts: number | null;
+  verified: boolean;
+  isPrivate: boolean;
+  category: string | null;
+  engagementRate: number | null;
+  thumbnails: string[];
+};
+
+export function toInstagramPreview(handle: string, p: ApifyProfile): InstagramPreview {
+  const metrics = computeMetrics(p.followersCount, p.latestPosts);
+  return {
+    handle: p.username?.toLowerCase() || handle,
+    fullName: p.fullName || null,
+    biography: p.biography || null,
+    profilePicUrl: p.profilePicUrlHD || p.profilePicUrl || null,
+    followers: p.followersCount ?? null,
+    following: p.followsCount ?? null,
+    posts: p.postsCount ?? null,
+    verified: !!p.verified,
+    isPrivate: !!p.private,
+    category: p.businessCategoryName ?? null,
+    engagementRate: metrics.engagement_rate,
+    thumbnails: (p.latestPosts ?? []).map((x) => x.displayUrl).filter((u): u is string => !!u).slice(0, 3),
+  };
 }
 
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
@@ -102,13 +155,13 @@ function extractContacts(text = "") {
 }
 
 /** Fetch a social account from Apify and store profile, metrics, snapshot and posts. */
-export async function syncInstagramAccount(accountId: string) {
+export async function syncInstagramAccount(accountId: string, opts: Pick<FetchOpts, "maxAgeMs"> = {}) {
   const db = createAdminClient();
   const { data: account, error } = await db.from("social_accounts").select("id, handle").eq("id", accountId).single();
   if (error || !account) throw new Error("Account not found");
 
   try {
-    const p = await fetchInstagramProfile(account.handle);
+    const p = await fetchInstagramProfile(account.handle, opts);
     const metrics = computeMetrics(p.followersCount, p.latestPosts);
     const contacts = extractContacts(p.biography);
     await db
