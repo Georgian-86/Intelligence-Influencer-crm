@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useId } from "react";
 import { clsx } from "clsx";
 
 /**
@@ -7,15 +8,17 @@ import { clsx } from "clsx";
  * official Vigor Launchpad logo file when available; every logo in the app renders from here.
  */
 export function LogoMark({ className = "h-8 w-8" }: { className?: string }) {
+  // Unique per instance: a shared id breaks every later logo when the first one is display:none.
+  const gid = `vlp-g-${useId().replace(/:/g, "")}`;
   return (
     <svg viewBox="0 0 32 32" className={className} role="img" aria-label="Vigor Launchpad">
       <defs>
-        <linearGradient id="vlp-g" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#FF8A3D" />
           <stop offset="1" stopColor="#FF4D00" />
         </linearGradient>
       </defs>
-      <rect width="32" height="32" rx="8" fill="url(#vlp-g)" />
+      <rect width="32" height="32" rx="8" fill={`url(#${gid})`} />
       {/* V */}
       <path d="M6.5 8.5 L13 24.5 L17.6 13.2" fill="none" stroke="#0A0A0B" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
       {/* exhaust trail */}
