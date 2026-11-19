@@ -98,12 +98,12 @@ export function EnquiryForm({ serverError }: { serverError?: string }) {
       </div>
 
       <fieldset>
-        <legend className="label">Budget (approx.) <span className="font-normal text-mute/80">· optional</span></legend>
+        <legend className="label">Budget (approx.) <span className="font-normal text-mute">· optional</span></legend>
         <div className="flex flex-wrap gap-2">
           {BUDGETS.map((b) => (
             <label key={b} className="relative">
               <input type="radio" name="budget" value={b} className="peer sr-only" />
-              <span className="flex min-h-11 items-center rounded-xl border border-line bg-ink-2 px-3.5 text-sm text-mute transition-[border-color,background-color,color] duration-150 hover:border-line-2 hover:text-fog peer-checked:border-brand peer-checked:bg-brand/10 peer-checked:text-fog peer-focus-visible:ring-2 peer-focus-visible:ring-brand peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-ink">
+              <span className="flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-medium text-ink-2 transition-[border-color,background-color,color] duration-150 hover:border-line-2 hover:text-ink peer-checked:border-cobalt peer-checked:bg-cobalt-50 peer-checked:text-cobalt peer-focus-visible:ring-2 peer-focus-visible:ring-cobalt peer-focus-visible:ring-offset-2">
                 {b}
               </span>
             </label>
@@ -172,7 +172,7 @@ function Input({ name, label, error, hint, type = "text", ...rest }: {
 
 function FieldError({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <p id={id} className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-[#ff7a70]">
+    <p id={id} className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-bad">
       <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> {children}
     </p>
   );
@@ -180,7 +180,7 @@ function FieldError({ id, children }: { id: string; children: ReactNode }) {
 
 function Banner({ children }: { children: ReactNode }) {
   return (
-    <div role="alert" className="flex items-center gap-2 rounded-xl border border-bad/40 bg-bad/10 px-3.5 py-2.5 text-sm text-[#ff9a92]">
+    <div role="alert" className="flex items-center gap-2 rounded-xl border border-bad/30 bg-bad-bg px-3.5 py-2.5 text-sm font-medium text-bad">
       <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" /> {children}
     </div>
   );
@@ -189,7 +189,7 @@ function Banner({ children }: { children: ReactNode }) {
 function Submit() {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className="btn-primary group min-h-12 w-full text-[15px]">
+    <button type="submit" disabled={pending} className="btn-primary btn-lg group w-full">
       {pending ? (
         <><LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> Sending…</>
       ) : (

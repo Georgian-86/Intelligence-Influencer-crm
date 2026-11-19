@@ -1,151 +1,118 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { clsx } from "clsx";
+import { ArrowUpRight, Menu, X } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 
-const NAV = [
-  { href: "/#audiences", label: "Who it's for" },
-  { href: "/#how", label: "How it works" },
+const LINKS = [
+  { href: "/#audiences", label: "Creators" },
+  { href: "/brands", label: "Brands" },
   { href: "/#campuses", label: "Campuses" },
-  { href: "/brands", label: "For brands" },
+  { href: "/#how", label: "How it works" },
 ];
 
-export function HeaderBar({ loggedIn }: { loggedIn: boolean }) {
+/**
+ * Floating glass nav. Condenses after 24px of scroll (glass layer fades in, bar lifts) using
+ * transform/opacity only. Mobile: a sheet with Escape-to-close and focus return.
+ */
+export function HeaderBar({ loggedIn = false }: { loggedIn?: boolean }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   const btnRef = useRef<HTMLButtonElement>(null);
-  const panelId = useId();
-  const reduce = useReducedMotion();
+  const sheetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const on = () => setScrolled(window.scrollY > 24);
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
   }, []);
+
+  useEffect(() => setOpen(false), [pathname]);
 
   useEffect(() => {
     if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    sheetRef.current?.querySelector<HTMLElement>("a")?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setOpen(false);
-        btnRef.current?.focus();
-      }
+      if (e.key === "Escape") { setOpen(false); btnRef.current?.focus(); }
     };
-    const mq = window.matchMedia("(min-width: 768px)");
-    const onMq = () => mq.matches && setOpen(false);
-    document.addEventListener("keydown", onKey);
-    mq.addEventListener("change", onMq);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      mq.removeEventListener("change", onMq);
-    };
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
   }, [open]);
 
-  const close = () => setOpen(false);
+  const condensed = scrolled || open;
 
   return (
-    <header className="sticky top-0 z-40">
-      {/* Glass layer fades in on scroll (opacity only — no layout or colour transitions). */}
+    <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-5 sm:pt-4">
       <div
-        aria-hidden="true"
         className={clsx(
-          "pointer-events-none absolute inset-0 border-b border-white/[0.07] bg-ink/75 backdrop-blur-xl backdrop-saturate-150 transition-opacity duration-300",
-          scrolled || open ? "opacity-100" : "opacity-0",
+          "relative mx-auto flex h-16 max-w-[1240px] items-center justify-between gap-4 rounded-full pl-4 pr-2 transition-transform duration-500 ease-out-expo sm:pl-5",
+          condensed && "-translate-y-1",
         )}
-      />
-      <div className="relative mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
-        <Logo />
+      >
+        {/* glass layer: opacity + scale only */}
+        <span
+          aria-hidden
+          className={clsx(
+            "glass pointer-events-none absolute inset-0 rounded-full shadow-md transition-[opacity,transform] duration-500 ease-out-expo",
+            condensed ? "scale-100 opacity-100" : "scale-[1.015] opacity-0",
+          )}
+        />
+        <Logo className="relative" />
 
-        <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
-          {NAV.map((n) => (
-            <Link key={n.href} href={n.href} className="btn-quiet min-h-11 px-3 font-medium">
-              {n.label}
+        <nav aria-label="Main" className="relative hidden items-center gap-1 lg:flex">
+          {LINKS.map((l) => (
+            <Link key={l.href} href={l.href} className="rounded-full px-3.5 py-2 text-[14px] font-medium text-ink-2 transition-colors duration-150 hover:bg-ink/5 hover:text-ink">
+              {l.label}
             </Link>
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
-          {loggedIn ? (
-            <Link href="/dashboard" className="btn-primary min-h-11 px-4">
-              Dashboard <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
-          ) : (
-            <>
-              <Link href="/login" className="btn-quiet hidden min-h-11 px-3 font-medium sm:inline-flex">
-                Log in
-              </Link>
-              <Link href="/join" className="btn-primary min-h-11 px-4">
-                Join
-              </Link>
-            </>
-          )}
+        <div className="relative flex items-center gap-1.5">
+          <Link href={loggedIn ? "/dashboard" : "/login"} className="btn-quiet hidden sm:inline-flex">
+            {loggedIn ? "Dashboard" : "Log in"}
+          </Link>
+          <Link href="/join" className="btn-primary hidden sm:inline-flex">
+            Join free <ArrowUpRight className="h-4 w-4" aria-hidden />
+          </Link>
           <button
             ref={btnRef}
             type="button"
-            className="btn-ghost h-11 w-11 p-0 md:hidden"
-            aria-expanded={open}
-            aria-controls={panelId}
-            aria-label={open ? "Close menu" : "Open menu"}
             onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-controls="mobile-sheet"
+            className="grid h-11 w-11 place-items-center rounded-full text-ink transition-colors hover:bg-ink/5 lg:hidden"
           >
-            {open ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
+            <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
+            {open ? <X className="h-5 w-5" aria-hidden /> : <Menu className="h-5 w-5" aria-hidden />}
           </button>
         </div>
       </div>
 
-      <AnimatePresence>
-        {open && (
-          <>
-            <motion.div
-              key="scrim"
-              aria-hidden="true"
-              className="fixed inset-x-0 bottom-0 top-16 bg-ink/70 md:hidden"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
-              onClick={close}
-            />
-            <motion.div
-              key="panel"
-              id={panelId}
-              className="absolute inset-x-0 top-16 border-b border-white/[0.07] bg-ink/95 backdrop-blur-xl md:hidden"
-              initial={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
-              transition={{ duration: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
-            >
-              <nav aria-label="Mobile" className="mx-auto max-w-6xl px-4 pb-5 pt-2">
-                <ul className="divide-y divide-line">
-                  {NAV.map((n) => (
-                    <li key={n.href}>
-                      <Link
-                        href={n.href}
-                        onClick={close}
-                        className="flex min-h-12 items-center justify-between py-3 text-base font-medium text-fog"
-                      >
-                        {n.label}
-                        <ArrowRight className="h-4 w-4 text-mute" aria-hidden="true" />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-                {!loggedIn && (
-                  <div className="mt-4 grid grid-cols-2 gap-2">
-                    <Link href="/login" onClick={close} className="btn-ghost min-h-12">Log in</Link>
-                    <Link href="/join" onClick={close} className="btn-primary min-h-12">Join the network</Link>
-                  </div>
-                )}
-              </nav>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      <div
+        id="mobile-sheet"
+        ref={sheetRef}
+        hidden={!open}
+        className="glass mx-auto mt-2 max-w-[1240px] origin-top rounded-[28px] p-3 shadow-lg lg:hidden"
+      >
+        <nav aria-label="Mobile" className="grid">
+          {LINKS.map((l) => (
+            <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="flex min-h-12 items-center justify-between rounded-2xl px-4 font-display text-[20px] font-semibold tracking-[-0.02em] text-ink hover:bg-ink/5">
+              {l.label} <ArrowUpRight className="h-4 w-4 text-mute" aria-hidden />
+            </Link>
+          ))}
+        </nav>
+        <div className="mt-2 grid grid-cols-2 gap-2 border-t border-line/70 pt-3">
+          <Link href={loggedIn ? "/dashboard" : "/login"} onClick={() => setOpen(false)} className="btn-ghost h-12">{loggedIn ? "Dashboard" : "Log in"}</Link>
+          <Link href="/join" onClick={() => setOpen(false)} className="btn-primary h-12">Join free</Link>
+        </div>
+      </div>
     </header>
   );
 }
