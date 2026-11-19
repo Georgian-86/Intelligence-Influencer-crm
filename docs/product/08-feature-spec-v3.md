@@ -1,7 +1,7 @@
 # 08 · Feature Spec v3 — by user type
 
 > Extends `03-PRD.md` (v2 P0/P1). Pains and stage IDs (S1–S14) come from `07-campaign-lifecycle-and-pains.md`;
-> architecture and cost in `09-architecture-cost.md`; contested choices in `06-decision-log.md` (D10–D20).
+> architecture and cost in `09-architecture-cost.md`; contested choices in `06-decision-log.md` (D13–D23).
 > Methods applied: signup-flow-cro (field-by-field friction), activation design, user story mapping, RICE,
 > pre-mortem, red team. Prices marked *(verify)* must be checked against the vendor's rate card before launch.
 
@@ -165,7 +165,7 @@ autocomplete. Never mark as verified from inference alone.
 |---|---|---|---|
 | College email OTP (email magic code) | ~free | High | Default if student has a college email |
 | Student ID upload (front, with name + college + validity) | Manual review ~1 min | Medium | Fallback; image deleted after 30 days, only result kept |
-| DigiLocker / APAAR ID | Integration effort | Highest | Later; evaluate if fraud appears (D19) |
+| DigiLocker / APAAR ID | Integration effort | Highest | Later; evaluate if fraud appears (D22) |
 
 ### 3.6 Campus ambassador programme (`CO-6`)
 
@@ -193,13 +193,13 @@ metric names at build time (Meta renamed `impressions` → `views` in 2025). Scr
 sits in a ToS grey zone (D8) — keep Apify isolated behind one adapter so it can be swapped.
 
 **Prompt to connect:** after first shortlist ("Brands approve verified creators 2× faster" — measure before
-claiming), never at signup (D12).
+claiming), never at signup (D15).
 
 ---
 
 ## 5. WhatsApp integration — `WA`
 
-**Channel:** Meta WhatsApp Business **Cloud API** direct (D13). Number: dedicated Vigor sender with display
+**Channel:** Meta WhatsApp Business **Cloud API** direct (D16). Number: dedicated Vigor sender with display
 name "Vigor Talent Network", green-tick later.
 
 | ID | Use | Mechanism |
@@ -361,7 +361,7 @@ real time; AM sees who opened, when, and what's pending.
 | ID | Spec |
 |---|---|
 | CT-1 | Booking terms from template: fee, deliverables, dates, revision limit, usage rights (organic only / paid ads N days), exclusivity (category, days), payment terms, cancellation |
-| CT-2 | Click-accept with OTP (logged IP, timestamp, version hash) default; Aadhaar eSign via provider for high-value bookings (D18) |
+| CT-2 | Click-accept with OTP (logged IP, timestamp, version hash) default; Aadhaar eSign via provider for high-value bookings (D21) |
 | BR-1 | Creator brief page per booking: key message, do/don't, mandatory tags/hashtags/links, references, product shipping status, FAQ |
 | BR-2 | Brief Q&A: creator asks → answer once → added to FAQ for all |
 | OP-1 | Shipments: address at booking, courier + tracking link, "Received" tap; barter value logged for TDS 194R |
