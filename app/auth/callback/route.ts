@@ -11,5 +11,6 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) return NextResponse.redirect(new URL(next, url.origin));
   }
-  return NextResponse.redirect(new URL("/login?error=Could%20not%20verify%20link", url.origin));
+  // Opened on another device/browser: the email is already confirmed, so just ask them to log in.
+  return NextResponse.redirect(new URL(`/login?confirmed=1&next=${encodeURIComponent(next)}`, url.origin));
 }
