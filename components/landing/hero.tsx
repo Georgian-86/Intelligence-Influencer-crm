@@ -66,7 +66,7 @@ export function Hero() {
         </div>
 
         {/* visual: WebGL object + floating cards + live demo */}
-        <div className="relative mx-auto aspect-[1/1.02] w-full max-w-[640px] lg:mr-[-2rem] lg:mt-[-6.5rem]">
+        <div className="relative mx-auto aspect-[1/1.02] w-full max-w-[640px] lg:mr-[-2rem] lg:mt-[-1.5rem]">
           <Hero3D className="absolute inset-[-6%]" />
 
           {a && (

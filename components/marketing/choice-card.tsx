@@ -22,7 +22,7 @@ export function ChoiceCard({ href, kicker, title, desc, perks, cta, preview, fea
         <span className={clsx("text-[13px] font-medium", featured ? "text-white/75" : "text-cobalt")}>{kicker}</span>
         <h2 className="mt-1.5 font-display text-[28px] font-bold leading-[1.05] tracking-[-0.035em]">{title}</h2>
         <p className={clsx("mt-2 text-[15px] leading-relaxed", featured ? "text-white/80" : "text-ink-2")}>{desc}</p>
-        <ul className="mt-5 space-y-2.5">
+        <ul className="mb-8 mt-5 space-y-2.5">
           {perks.map((p) => (
             <li key={p} className={clsx("flex items-start gap-2.5 text-[14.5px]", featured ? "text-white/90" : "text-ink-2")}>
               <span className={clsx("mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full", featured ? "bg-white/20 text-white" : "bg-cobalt-50 text-cobalt")}><Check className="h-3 w-3" aria-hidden /></span>
@@ -30,7 +30,7 @@ export function ChoiceCard({ href, kicker, title, desc, perks, cta, preview, fea
             </li>
           ))}
         </ul>
-        <span className={clsx("mt-8 inline-flex h-12 items-center justify-between rounded-full pl-5 pr-1.5 text-[15px] font-semibold transition-colors", featured ? "bg-white text-cobalt" : "bg-ink text-white group-hover:bg-night-3")}>
+        <span className={clsx("mt-auto inline-flex h-12 items-center justify-between rounded-full pl-5 pr-1.5 text-[15px] font-semibold transition-colors", featured ? "bg-white text-cobalt" : "bg-ink text-white group-hover:bg-night-3")}>
           {cta}
           <span className={clsx("grid h-9 w-9 place-items-center rounded-full transition-transform duration-300 ease-out-expo group-hover:translate-x-0.5", featured ? "bg-cobalt text-white" : "bg-white/15")}>
             <ArrowRight className="h-4 w-4" aria-hidden />

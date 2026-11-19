@@ -127,7 +127,7 @@ export function EnquiryForm({ serverError }: { serverError?: string }) {
           aria-describedby={errors.requirement ? "f-requirement-err" : "f-requirement-hint"}
           onBlur={() => revalidate("requirement")}
           onChange={(e) => { setReqLen(e.target.value.trim().length); if (errors.requirement) revalidate("requirement"); }}
-          className={clsx("input resize-y leading-relaxed", errors.requirement && "border-bad focus:border-bad focus:ring-bad/15")}
+          className={clsx("textarea min-h-32 resize-y leading-relaxed", errors.requirement && "border-bad focus:border-bad focus:ring-bad/15")}
           placeholder="e.g. 40 food creators in Pune + Mumbai for a menu launch, reels + stories, plus 20 promoters for 6 campus activations in March."
         />
         {errors.requirement ? (
@@ -193,7 +193,7 @@ function Submit() {
       {pending ? (
         <><LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> Sending…</>
       ) : (
-        <>Send requirement <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" /></>
+        <>Send brief <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" /></>
       )}
     </button>
   );
