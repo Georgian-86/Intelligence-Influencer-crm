@@ -1,0 +1,42 @@
+import { clsx } from "clsx";
+import { Check } from "lucide-react";
+import { PHASES, type Phase } from "@/lib/demo/portal";
+
+export const shortDate = (iso: string) => new Date(iso + (iso.length === 10 ? "T00:00:00Z" : "")).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" });
+export const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
+export const TODAY = "2026-11-19";
+
+/** Six-step campaign phase rail: Brief → Report. */
+export function PhaseRail({ phase, className }: { phase: Phase; className?: string }) {
+  const at = PHASES.findIndex((p) => p.key === phase);
+  return (
+    <ol className={clsx("grid grid-cols-6 gap-1", className)} aria-label={`Campaign phase: ${PHASES[at].label}`}>
+      {PHASES.map((p, i) => {
+        const done = i < at, now = i === at;
+        return (
+          <li key={p.key} className="min-w-0" aria-current={now ? "step" : undefined}>
+            <div className={clsx("h-1.5 rounded-full", done ? "bg-cobalt" : now ? "bg-[linear-gradient(90deg,var(--color-cobalt)_50%,var(--color-cobalt-100)_50%)]" : "bg-canvas-2")} />
+            <div className={clsx("mt-2 flex items-center gap-1 truncate text-[11.5px]", now ? "font-semibold text-ink" : done ? "text-ink-2" : "text-faint")}>
+              {done && <Check className="h-3 w-3 shrink-0 text-cobalt" strokeWidth={2.6} aria-hidden />}
+              {now && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-flame" aria-hidden />}
+              <span className="truncate">{p.label}</span>
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+export function PageTitle({ title, subtitle, actions, eyebrow }: { title: React.ReactNode; subtitle?: React.ReactNode; actions?: React.ReactNode; eyebrow?: React.ReactNode }) {
+  return (
+    <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <div className="min-w-0">
+        {eyebrow && <div className="mb-2 text-[13px] font-medium text-mute">{eyebrow}</div>}
+        <h1 className="text-[28px] font-bold leading-[1.1] tracking-[-0.035em] sm:text-[36px]">{title}</h1>
+        {subtitle && <p className="mt-2 max-w-2xl text-[15px] text-mute">{subtitle}</p>}
+      </div>
+      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+    </div>
+  );
+}
