@@ -1,5 +1,5 @@
-import { PageSkeleton } from "@/components/skeletons";
+import { CrmHomeSkeleton } from "@/components/crm/skeletons";
 
 export default function Loading() {
-  return <PageSkeleton />;
+  return <CrmHomeSkeleton />;
 }
