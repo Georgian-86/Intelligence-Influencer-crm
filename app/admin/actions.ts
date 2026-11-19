@@ -53,6 +53,28 @@ export async function addMember(formData: FormData) {
   redirect(`/admin/team?${error ? `error=${encodeURIComponent(error.message)}` : "saved=1"}`);
 }
 
+/**
+ * Fast triage from the screening queue: changes status and/or rank only (keeps notes, rating and
+ * reliability untouched, unlike the full review form) and returns to the list.
+ */
+export async function quickReview(formData: FormData) {
+  await requirePlatform("talent.approve");
+  const user = await getUser();
+  const id = String(formData.get("id"));
+  const status = String(formData.get("status") ?? "");
+  const rank = String(formData.get("rank") ?? "");
+  const rawBack = String(formData.get("back") ?? "/admin");
+  const back = rawBack.startsWith("/admin") ? rawBack : "/admin";
+  const patch: Record<string, unknown> = { reviewed_by: user!.id, reviewed_at: new Date().toISOString() };
+  if ((TALENT_STATUSES as readonly string[]).includes(status)) patch.status = status;
+  if ((RANKS as readonly string[]).includes(rank)) patch.rank = rank;
+  const supabase = await createClient();
+  const { error } = await supabase.from("talent_profiles").update(patch).eq("id", id);
+  revalidatePath("/admin");
+  const sep = back.includes("?") ? "&" : "?";
+  redirect(error ? `${back}${sep}error=${encodeURIComponent(error.message)}` : back);
+}
+
 export async function removeMember(formData: FormData) {
   await requirePlatform("member.manage");
   const supabase = await createClient();
