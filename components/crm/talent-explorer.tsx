@@ -227,7 +227,7 @@ export function TalentExplorer({ rows, briefs, initialQuery, savedViews, canExpo
           <label className="relative md:min-w-[200px] md:flex-1">
             <span className="sr-only">Search creators</span>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
-            <input ref={searchRef} value={f.q} onChange={(e) => set("q", e.target.value)} placeholder="Name, @handle, college or niche"
+            <input ref={searchRef} value={f.q} onChange={(e) => set("q", e.target.value)} placeholder="Search name, @handle, college"
               className="h-10 w-full rounded-full border border-line bg-canvas/60 pl-9 pr-10 text-[14px] outline-none transition-[border-color,box-shadow] placeholder:text-faint hover:border-line-2 focus:border-cobalt focus:bg-surface focus:ring-4 focus:ring-cobalt/12" />
             <Kbd className="absolute right-3 top-1/2 -translate-y-1/2">/</Kbd>
           </label>
@@ -413,7 +413,7 @@ export function TalentExplorer({ rows, briefs, initialQuery, savedViews, canExpo
       <AnimatePresence>
         {selected.size > 0 && (
           <motion.div initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 16, opacity: 0 }} transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-x-3 bottom-24 z-40 mx-auto flex max-w-[680px] flex-wrap items-center gap-2 rounded-[20px] bg-night p-2 pl-4 text-white shadow-lg lg:bottom-6 lg:left-[256px]" role="region" aria-label="Bulk actions">
+            className={clsx("fixed inset-x-3 bottom-24 z-40 mx-auto flex max-w-[680px] flex-wrap items-center gap-2 rounded-[20px] bg-night p-2 pl-4 text-white shadow-lg lg:bottom-6 lg:left-[256px]", peekRow && "md:right-[400px]")} role="region" aria-label="Bulk actions">
             <span className="text-[13.5px] font-semibold tabular-nums">{selected.size} selected</span>
             <button onClick={() => setSelected(new Set())} className="text-[12.5px] text-white/60 hover:text-white">Clear</button>
             <div className="ml-auto flex flex-wrap items-center gap-2">

@@ -1,5 +1,5 @@
-import { PageSkeleton } from "@/components/skeletons";
+import { TodaySkeleton } from "@/components/crm/skeletons";
 
 export default function Loading() {
-  return <PageSkeleton />;
+  return <TodaySkeleton />;
 }

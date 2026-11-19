@@ -63,7 +63,7 @@ export default async function CrmToday() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-12">
-        <div className="space-y-6 lg:col-span-8">
+        <div className="min-w-0 space-y-6 lg:col-span-8">
           <NeedsQueue items={d.queue} />
 
           <section aria-labelledby="health-h">
@@ -100,7 +100,7 @@ export default async function CrmToday() {
           </section>
         </div>
 
-        <aside className="space-y-6 lg:col-span-4">
+        <aside className="min-w-0 space-y-6 lg:col-span-4">
           <section className="card p-5" aria-labelledby="team-h">
             <SectionTitle><span id="team-h">Team load</span></SectionTitle>
             {d.team.length === 0 ? <p className="text-[13px] text-mute">Workload appears once teammates own campaigns.</p> : (

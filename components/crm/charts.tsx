@@ -40,7 +40,9 @@ export function AreaChart({ data, labels, format, height = 200, className, label
             <path d={line} fill="none" stroke="var(--color-cobalt)" strokeWidth="2.25" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
           </svg>
           <span className="absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface bg-cobalt shadow-sm" style={{ left: `${(last[0] / W) * 100}%`, top: `${(last[1] / H) * 100}%` }} />
-          <span className="absolute -translate-x-1/2 -translate-y-[calc(100%+10px)] whitespace-nowrap rounded-md bg-night px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-white" style={{ left: `${(pts[peak][0] / W) * 100}%`, top: `${(pts[peak][1] / H) * 100}%` }}>
+          <span className={clsx("absolute -translate-y-[calc(100%+10px)] whitespace-nowrap rounded-md bg-night px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-white",
+            peak / (data.length - 1) > 0.8 ? "-translate-x-[calc(100%-6px)]" : peak / (data.length - 1) < 0.2 ? "-translate-x-1.5" : "-translate-x-1/2")}
+            style={{ left: `${(pts[peak][0] / W) * 100}%`, top: `${(pts[peak][1] / H) * 100}%` }}>
             Peak {format(data[peak])}
           </span>
         </div>
