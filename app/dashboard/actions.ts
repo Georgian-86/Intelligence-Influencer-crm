@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { syncInstagramAccount } from "@/lib/instagram";
 
-export async function expressInterest(formData: FormData) {
+/** Shared insert used by both interest actions. A duplicate (23505) counts as success. */
+async function insertIntent(formData: FormData) {
   const briefId = String(formData.get("brief_id"));
   const supabase = await createClient();
   const { data: talentId } = await supabase.rpc("my_talent_id");
@@ -17,11 +18,31 @@ export async function expressInterest(formData: FormData) {
     message: String(formData.get("message") ?? "").trim() || null,
     quoted_rate: rate ? parseInt(rate, 10) : null,
   });
-  if (error && error.code !== "23505") {
+  return { briefId, ok: !error || error.code === "23505" };
+}
+
+export async function expressInterest(formData: FormData) {
+  const { briefId, ok } = await insertIntent(formData);
+  if (!ok) {
     redirect(`/dashboard/briefs/${briefId}?error=${encodeURIComponent("Could not register your interest.")}`);
   }
   revalidatePath("/dashboard/briefs");
   redirect(`/dashboard/briefs/${briefId}?sent=1`);
+}
+
+export type InterestState = { status: "idle" | "sent" | "error"; message?: string };
+
+/**
+ * One-tap "I'm in" (A5). Same insert as expressInterest, but returns state instead of redirecting
+ * so the brief card / detail panel can show an optimistic success state in place.
+ */
+export async function quickInterest(_prev: InterestState, formData: FormData): Promise<InterestState> {
+  const { ok } = await insertIntent(formData);
+  if (!ok) return { status: "error", message: "Couldn't register your interest — please try again." };
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/briefs");
+  revalidatePath("/dashboard/applications");
+  return { status: "sent" };
 }
 
 export async function withdrawInterest(formData: FormData) {
