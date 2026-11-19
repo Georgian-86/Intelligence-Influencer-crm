@@ -165,3 +165,91 @@ export async function syncInstagramAccount(accountId: string) {
     return { ok: false as const, error: message };
   }
 }
+
+/* ------------------------------------------------------------------ onboarding preview */
+
+const NICHE_WORDS: [string, RegExp][] = [
+  ["Fashion", /\b(fashion|style|stylist|ootd|outfits?|fits?|thrift)\b/i],
+  ["Beauty", /\b(beauty|makeup|mua|skincare|skin|grwm)\b/i],
+  ["Lifestyle", /\b(lifestyle|vlogs?|daily|life)\b/i],
+  ["Food", /\b(food|foodie|eats|recipes?|chef|caf[eé]s?|chai)\b/i],
+  ["Travel", /\b(travel|traveller|wanderlust|trips?|backpack)\b/i],
+  ["Fitness", /\b(fitness|gym|workout|yoga|athlete|runner)\b/i],
+  ["Tech", /\b(tech|gadgets?|coder|developer)\b/i],
+  ["Comedy", /\b(comedy|comedian|memes?|funny|sketch)\b/i],
+  ["Music", /\b(music|singer|musician|producer|guitar|rapper)\b/i],
+  ["Dance", /\b(dance|dancer|choreo\w*)\b/i],
+  ["Gaming", /\b(gaming|gamer|esports|bgmi|valorant)\b/i],
+  ["Finance", /\b(finance|money|investing|stocks)\b/i],
+  ["Photography", /\b(photo\w*|shot on)\b/i],
+  ["Student / Campus", /(\b(campus|college|student|uni|university|batch)\b|'\d{2}\b)/i],
+];
+
+const CITY_WORDS: [string, RegExp][] = [
+  ["Mumbai", /\b(mumbai|bombay|bandra|andheri|thane)\b/i],
+  ["Pune", /\bpune\b/i],
+  ["Delhi", /\b(delhi|ncr|gurgaon|gurugram|noida)\b/i],
+  ["Bangalore", /\b(bangalore|bengaluru|blr)\b/i],
+  ["Hyderabad", /\b(hyderabad|hyd)\b/i],
+  ["Chennai", /\b(chennai|madras)\b/i],
+  ["Kolkata", /\b(kolkata|calcutta)\b/i],
+  ["Ahmedabad", /\b(ahmedabad|amdavad)\b/i],
+  ["Chandigarh", /\bchandigarh\b/i],
+  ["Goa", /\bgoa\b/i],
+];
+
+/** Best-effort niche / city / language inference from a public bio (shown as editable chips, never trusted blindly). */
+export function inferFromBio(bio = "", category?: string | null) {
+  const text = `${bio} ${category ?? ""}`;
+  const niches = NICHE_WORDS.filter(([, re]) => re.test(text)).map(([n]) => n).slice(0, 4);
+  const city = CITY_WORDS.find(([, re]) => re.test(text))?.[0] ?? null;
+  const languages = ["English"];
+  if (/[ऀ-ॿ]/.test(bio) || /\b(hindi|desi|yaar|bhai)\b/i.test(bio)) languages.push("Hindi");
+  if (/\bmarathi\b/i.test(bio)) languages.push("Marathi");
+  if (/[஀-௿]/.test(bio) || /\btamil\b/i.test(bio)) languages.push("Tamil");
+  const year = bio.match(/'(2[5-9]|30)\b/)?.[1] ?? bio.match(/\b20(2[5-9]|30)\b/)?.[1];
+  return { niches, city, languages, gradYear: year ? 2000 + Number(year) : null };
+}
+
+export type InstagramPreview = {
+  handle: string;
+  fullName: string | null;
+  bio: string | null;
+  photoUrl: string | null;
+  followers: number | null;
+  engagementRate: number | null;
+  avgViews: number | null;
+  isPrivate: boolean;
+  isVerified: boolean;
+  posts: { id: string; thumb: string | null; views: number | null; likes: number | null; type: string; hue: number }[];
+  niches: string[];
+  city: string | null;
+  languages: string[];
+  gradYear: number | null;
+};
+
+/** Live preview for onboarding step 1: fetch from Apify and shape it for the preview card. */
+export async function previewInstagram(handle: string): Promise<InstagramPreview> {
+  const p = await fetchInstagramProfile(handle);
+  const m = computeMetrics(p.followersCount, p.latestPosts);
+  const inf = inferFromBio(p.biography, p.businessCategoryName);
+  const proxy = (u?: string | null) => (u ? `/api/img?u=${encodeURIComponent(u)}` : null);
+  const score = (x: ApifyPost) => x.videoPlayCount ?? x.videoViewCount ?? x.likesCount ?? 0;
+  const top = (p.latestPosts ?? []).filter((x) => !x.isPinned).sort((a, b) => score(b) - score(a)).slice(0, 3);
+  return {
+    handle: p.username ?? handle,
+    fullName: p.fullName ?? null,
+    bio: p.biography ?? null,
+    photoUrl: proxy(p.profilePicUrlHD || p.profilePicUrl),
+    followers: p.followersCount ?? null,
+    engagementRate: m.engagement_rate,
+    avgViews: m.avg_views,
+    isPrivate: !!p.private,
+    isVerified: !!p.verified,
+    posts: top.map((x, i) => ({
+      id: x.shortCode ?? String(i), thumb: proxy(x.displayUrl), views: x.videoPlayCount ?? x.videoViewCount ?? null,
+      likes: x.likesCount ?? null, type: x.type === "Video" ? "reel" : "post", hue: (228 + i * 40) % 360,
+    })),
+    ...inf,
+  };
+}

@@ -14,17 +14,17 @@ type Acc = {
 export function IgCard({ acc, action }: { acc: Acc; action?: React.ReactNode }) {
   const tier = followerTier(acc.followers);
   return (
-    <div className="card p-5">
+    <div className="card p-5 sm:p-6">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           {acc.profile_pic_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={imgSrc(acc.profile_pic_url)} alt="" referrerPolicy="no-referrer" className="h-12 w-12 rounded-full border border-line object-cover" />
           ) : (
-            <div className="grid h-12 w-12 place-items-center rounded-full bg-ink-3 text-mute">IG</div>
+            <div className="grid h-12 w-12 place-items-center rounded-full bg-canvas-2 text-mute">IG</div>
           )}
           <div>
-            <a href={`https://www.instagram.com/${acc.handle}/`} target="_blank" rel="noreferrer" className="font-semibold hover:text-brand">
+            <a href={`https://www.instagram.com/${acc.handle}/`} target="_blank" rel="noreferrer" className="font-semibold hover:text-cobalt">
               @{acc.handle}{acc.is_verified && <BadgeCheck className="ml-1 inline h-4 w-4 text-info" aria-label="Verified" />}
             </a>
             <div className="text-xs text-mute">
@@ -49,7 +49,7 @@ export function IgCard({ acc, action }: { acc: Acc; action?: React.ReactNode }) 
             ].map(([l, v]) => (
               <div key={l}>
                 <div className="text-[11px] uppercase tracking-wide text-mute">{l}</div>
-                <div className="text-lg font-bold tabular-nums">{v}</div>
+                <div className="font-display text-[20px] font-bold tracking-[-0.02em] tabular-nums">{v}</div>
               </div>
             ))}
           </div>
