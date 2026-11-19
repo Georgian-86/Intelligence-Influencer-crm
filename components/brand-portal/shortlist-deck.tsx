@@ -85,19 +85,19 @@ export function ShortlistDeck({ creators, target, campaignName, deliverable }: {
               <div className="min-w-[180px] flex-1">
                 <div className="flex items-baseline gap-2">
                   <span className="font-display text-[22px] font-bold tabular-nums">{approved.length}<span className="text-faint"> / {target}</span></span>
-                  <span className="text-[13px] text-mute">approved for {campaignName}</span>
+                  <span className="text-[13px] text-mute"><span className="hidden sm:inline">approved for {campaignName}</span><span className="tabular-nums sm:hidden">approved · {inr(fee)}</span></span>
                 </div>
                 <div className="mt-1.5 flex h-1.5 gap-[2px] overflow-hidden rounded-full" aria-hidden>
                   {Array.from({ length: target }).map((_, i) => <span key={i} className={clsx("flex-1 transition-colors duration-300", i < approved.length ? "bg-cobalt" : "bg-canvas-2")} />)}
                 </div>
               </div>
-              <dl className="flex gap-6 text-[13px]">
+              <dl className="hidden gap-6 text-[13px] sm:flex">
                 <div><dt className="text-mute">Total fees</dt><dd className="font-semibold tabular-nums">{inr(fee)}</dd></div>
                 <div><dt className="text-mute">Passed</dt><dd className="font-semibold tabular-nums">{passed}</dd></div>
                 <div><dt className="text-mute">Questions</dt><dd className="font-semibold tabular-nums">{questions}</dd></div>
               </dl>
-              <button onClick={() => setSent(true)} disabled={reviewed === 0} className="btn-primary w-full sm:w-auto">
-                <Send className="h-4 w-4" /> {allDone ? "Send decisions to Vigor" : `Send ${reviewed} decision${reviewed === 1 ? "" : "s"}`}
+              <button onClick={() => setSent(true)} disabled={reviewed === 0} className="btn-primary shrink-0 px-4 sm:px-5" aria-label="Send decisions to Vigor">
+                <Send className="h-4 w-4" /> <span className="sm:hidden">Send</span><span className="hidden sm:inline">{allDone ? "Send decisions to Vigor" : `Send ${reviewed} decision${reviewed === 1 ? "" : "s"}`}</span>
               </button>
             </>
           )}

@@ -21,6 +21,12 @@ const daysAgoLabel = (iso: string) => {
 };
 export { daysAgoLabel };
 
+/** Unreviewed demo creators signed up recently (0–4 days ago), whatever the base fixture says. */
+function demoJoined(id: string, fallback: string) {
+  const i = Object.keys(SCREENING).indexOf(id);
+  return i < 0 ? fallback : new Date(Date.parse("2026-11-19T09:00:00Z") - (i % 5) * 86400000 - i * 3600000).toISOString();
+}
+
 function demoErFor(id: string, er: number) { return SCREENING[id]?.er_override ?? er; }
 
 /* ---------------------------------------------------------------- queue */
@@ -32,7 +38,7 @@ export async function getQueue(status: Status, kind?: string): Promise<{ rows: Q
       const er = demoErFor(c.id, c.engagement_rate);
       return {
         id: c.id, name: c.display_name, handle: c.handle, city: c.city, college: college?.short ?? c.college_name,
-        followers: c.followers, er, rank: c.rank, status: c.status, created_at: c.joined_at,
+        followers: c.followers, er, rank: c.rank, status: c.status, created_at: demoJoined(c.id, c.joined_at),
         kinds: [c.is_influencer && "Influencer", c.is_event_talent && "Event"].filter(Boolean) as string[], categories: c.categories,
         hue: c.hue,
         flags: x ? computeFlags({ followers: c.followers, following: c.following, er, isPrivate: x.is_private, inCollege: c.in_college, collegeEmail: x.college_email, collegeDomains: college?.domains, idUploaded: x.id_uploaded }) : [],
@@ -139,7 +145,7 @@ export async function getTalentReview(id: string): Promise<TalentReview | null> 
     return {
       id: c.id, name: c.display_name, status, rank: c.rank, rating: status === "approved" ? c.rating : null, reliability: status === "approved" ? c.reliability_score : null,
       notes: null, reviewed_at: null, city: c.city, bio: c.bio, categories: c.categories, skills: c.skills, languages: c.languages,
-      kinds: [c.is_influencer && "Influencer", c.is_event_talent && "Event talent"].filter(Boolean) as string[], hue: c.hue, joined: c.joined_at,
+      kinds: [c.is_influencer && "Influencer", c.is_event_talent && "Event talent"].filter(Boolean) as string[], hue: c.hue, joined: demoJoined(c.id, c.joined_at),
       rates: { post: c.rate_per_post, full: c.rate_full_day }, consent: true,
       ig: {
         id: null, handle: c.handle, followers: c.followers, following: c.following, posts: c.posts_count,

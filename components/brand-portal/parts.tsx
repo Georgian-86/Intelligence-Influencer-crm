@@ -14,9 +14,9 @@ export function PhaseRail({ phase, className }: { phase: Phase; className?: stri
       {PHASES.map((p, i) => {
         const done = i < at, now = i === at;
         return (
-          <li key={p.key} className="min-w-0" aria-current={now ? "step" : undefined}>
+          <li key={p.key} className={clsx("min-w-0", now && "max-sm:overflow-visible")} aria-current={now ? "step" : undefined}>
             <div className={clsx("h-1.5 rounded-full", done ? "bg-cobalt" : now ? "bg-[linear-gradient(90deg,var(--color-cobalt)_50%,var(--color-cobalt-100)_50%)]" : "bg-canvas-2")} />
-            <div className={clsx("mt-2 flex items-center gap-1 truncate text-[11.5px]", now ? "font-semibold text-ink" : done ? "text-ink-2" : "text-faint")}>
+            <div className={clsx("mt-2 items-center gap-1 truncate text-[11.5px]", now ? "flex font-semibold text-ink" : done ? "hidden text-ink-2 sm:flex" : "hidden text-faint sm:flex")}>
               {done && <Check className="h-3 w-3 shrink-0 text-cobalt" strokeWidth={2.6} aria-hidden />}
               {now && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-flame" aria-hidden />}
               <span className="truncate">{p.label}</span>

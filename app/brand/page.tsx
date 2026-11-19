@@ -81,7 +81,7 @@ export default async function BrandHome() {
       <section aria-labelledby="campaigns" className="mb-10">
         <div className="mb-3 flex items-baseline justify-between">
           <h2 id="campaigns" className="text-[18px] font-semibold">Active campaigns</h2>
-          <span className="text-[13px] text-mute">Updated 12 min ago from Instagram</span>
+          <span className="hidden text-[13px] text-mute sm:inline">Updated 12 min ago from Instagram</span>
         </div>
         <div className="space-y-4">
           {PORTAL_CAMPAIGNS.map((c) => <CampaignHero key={c.id} c={c} />)}
