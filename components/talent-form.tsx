@@ -1,10 +1,32 @@
 import { CheckGroup, Field, Notice } from "@/components/ui";
 import { CITIES, EVENT_CATEGORY_GROUPS, INFLUENCER_NICHES, LANGUAGES, SKILLS, EVENT_CATEGORIES } from "@/lib/constants";
 import { saveTalentProfile } from "@/app/onboarding/actions";
+import { createClient } from "@/lib/supabase/server";
+import { EducationFields, type EducationDefaults } from "@/components/onboarding/education-fields";
+import { ProfileStrength } from "@/components/onboarding/profile-strength";
 
 type Talent = Record<string, any> | null;
 
-export function TalentForm({
+/** Education row + Instagram sync status for an existing talent (null-safe before migration 0005). */
+async function loadExtras(talentId: string) {
+  const supabase = await createClient();
+  const [edu, ig] = await Promise.all([
+    supabase
+      .from("talent_education")
+      .select("college_id, college_name, course, graduation_year, college_email, verified_at, colleges(name)")
+      .eq("talent_id", talentId)
+      .maybeSingle(),
+    supabase.from("social_accounts").select("handle, fetch_status").eq("talent_id", talentId).eq("platform", "instagram").maybeSingle(),
+  ]);
+  let education: EducationDefaults | null = null;
+  if (!edu.error && edu.data) {
+    const college = edu.data.colleges as unknown as { name?: string } | null;
+    education = { ...edu.data, college_name: college?.name ?? edu.data.college_name };
+  }
+  return { education, instagram: ig.data };
+}
+
+export async function TalentForm({
   talent, contact, instagram, media, defaultType, back, error, submitLabel,
 }: {
   talent: Talent;
@@ -20,11 +42,26 @@ export function TalentForm({
   const isEvt = talent ? talent.is_event_talent : defaultType === "event";
   const cats: string[] = talent?.categories ?? [];
   const mediaSlots = [...media, "", "", ""].slice(0, Math.max(3, media.length));
+  const extras = talent?.id ? await loadExtras(String(talent.id)) : { education: null, instagram: null };
+  const cityOptions: string[] = talent?.city && !(CITIES as readonly string[]).includes(talent.city) && talent.city !== "Other"
+    ? [...CITIES, talent.city]
+    : [...CITIES];
 
   return (
     <form action={saveTalentProfile} className="space-y-6">
       <input type="hidden" name="back" value={back} />
       {error && <Notice kind="error">{error}</Notice>}
+
+      {talent && (
+        <ProfileStrength
+          talent={talent}
+          contact={contact}
+          instagram={extras.instagram}
+          mediaCount={media.length}
+          education={extras.education}
+          showChecklist
+        />
+      )}
 
       <section className="card space-y-4 p-6">
         <h2 className="font-semibold">I&apos;m joining as</h2>
@@ -34,14 +71,14 @@ export function TalentForm({
         </div>
       </section>
 
-      <section className="card space-y-4 p-6">
+      <section id="basics" className="card scroll-mt-24 space-y-4 p-6">
         <h2 className="font-semibold">Basic details</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Display name"><input name="display_name" required defaultValue={talent?.display_name ?? ""} className="input" /></Field>
           <Field label="City">
             <select name="city" required defaultValue={talent?.city ?? ""} className="input">
               <option value="" disabled>Select city</option>
-              {CITIES.map((c) => <option key={c}>{c}</option>)}
+              {cityOptions.map((c) => <option key={c}>{c}</option>)}
               <option>Other</option>
             </select>
           </Field>
@@ -59,7 +96,7 @@ export function TalentForm({
         <Field label="Languages"><CheckGroup name="languages" options={LANGUAGES} selected={talent?.languages ?? []} columns={3} /></Field>
       </section>
 
-      <section className="card space-y-4 p-6">
+      <section id="instagram" className="card scroll-mt-24 space-y-4 p-6">
         <h2 className="font-semibold">Influencer details <span className="text-xs font-normal text-mute">(if joining as a creator)</span></h2>
         <Field label="Instagram profile link" hint="We fetch your public followers, posts and engagement automatically.">
           <input name="instagram" defaultValue={instagram ? `https://www.instagram.com/${instagram}/` : ""} className="input" placeholder="https://www.instagram.com/yourhandle/" />
@@ -68,7 +105,12 @@ export function TalentForm({
         <Field label="Rate per post / reel (₹, optional)"><input name="rate_per_post" inputMode="numeric" defaultValue={talent?.rate_per_post ?? ""} className="input" /></Field>
       </section>
 
-      <section className="card space-y-4 p-6">
+      <section id="education" className="card scroll-mt-24 space-y-4 p-6">
+        <h2 className="font-semibold">Education <span className="text-xs font-normal text-mute">(unlocks campus campaigns)</span></h2>
+        <EducationFields initial={extras.education} city={talent?.city} />
+      </section>
+
+      <section id="event" className="card scroll-mt-24 space-y-4 p-6">
         <h2 className="font-semibold">Event talent details <span className="text-xs font-normal text-mute">(if joining as event talent)</span></h2>
         {Object.entries(EVENT_CATEGORY_GROUPS).map(([group, items]) => (
           <Field key={group} label={group}>
@@ -85,7 +127,7 @@ export function TalentForm({
         <Field label="Rate notes"><input name="rate_notes" defaultValue={talent?.rate_notes ?? ""} className="input" placeholder="Packages, travel, outstation charges…" /></Field>
       </section>
 
-      <section className="card space-y-4 p-6">
+      <section id="portfolio" className="card scroll-mt-24 space-y-4 p-6">
         <h2 className="font-semibold">Portfolio &amp; performance videos</h2>
         <p className="text-sm text-mute">Links to YouTube, Google Drive, Instagram reels or your website.</p>
         <div className="space-y-2">
