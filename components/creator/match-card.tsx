@@ -33,7 +33,7 @@ export function MatchCard({ b, className }: { b: BriefVM; className?: string }) 
       <div className="mt-auto flex items-end justify-between gap-3 pt-5">
         <div>
           <div className="text-[12px] text-mute">Payout</div>
-          <div className="font-display text-[19px] font-bold tracking-[-0.02em] tabular-nums">{payout(b.budgetMin, b.budgetMax)}</div>
+          <div className="whitespace-nowrap font-display text-[17px] font-bold tracking-[-0.02em] tabular-nums sm:text-[19px]">{payout(b.budgetMin, b.budgetMax)}</div>
         </div>
         <div className="relative z-10">
           {b.applied && b.applied !== "interested" ? <StageChip stage={b.applied} className="h-11 px-4 text-[13px]" /> : <InterestButton briefId={b.id} applied={!!b.applied} />}

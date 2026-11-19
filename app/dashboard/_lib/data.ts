@@ -6,7 +6,7 @@ import { DEMO_BRIEFS, ME_APPLICATIONS, ME_CAMPUS, ME_EARNINGS, ME_PROFILE, ME_SE
 import { getMyTalent, getUser } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 import { imgSrc } from "@/components/ui";
-import { scoreBrief } from "./score";
+import { fmtDate, scoreBrief } from "./score";
 import type { ApplicationVM, BriefVM, CampusVM, CreatorVM, EarningsVM, PaymentStatus, Stage } from "./types";
 
 export const DEMO_INTEREST_COOKIE = "vtn_demo_interest";
@@ -154,7 +154,7 @@ export const getApplications = cache(async (c: CreatorVM): Promise<ApplicationVM
       const b = getDemoBrief(a.brief_id)!;
       return {
         id: a.id, briefId: a.brief_id, title: b.title, brand: b.brand_display, hue: b.hue, stage: a.stage, updatedAt: a.updated_at,
-        next: a.next, fee: a.fee, payment: a.payment, deliverableDue: a.deliverable_due, deliverables: b.deliverables, history: a.history, source: "applied",
+        next: a.next.replace(/\d{4}-\d{2}-\d{2}/, (d) => fmtDate(d)), fee: a.fee, payment: a.payment, deliverableDue: a.deliverable_due, deliverables: b.deliverables, history: a.history, source: "applied",
       };
     });
     const fresh: ApplicationVM[] = (await demoInterest())

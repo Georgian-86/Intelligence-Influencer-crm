@@ -45,6 +45,17 @@ export function OnboardingFlow({ ctx }: { ctx: OnboardingContext }) {
   const [pending, start] = useTransition();
   const [ready, setReady] = useState(false);
   const dir = useRef(1);
+  const formRef = useRef<HTMLFormElement>(null);
+  /* Enter advances even when focus isn't inside a field (e.g. after the fetch, or after tapping a card). */
+  useEffect(() => {
+    const on = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement;
+      if (e.key !== "Enter" || e.defaultPrevented || e.isComposing || ["INPUT", "TEXTAREA", "SELECT", "A", "BUTTON"].includes(t.tagName) || t.closest("[role=dialog]")) return;
+      e.preventDefault(); formRef.current?.requestSubmit();
+    };
+    window.addEventListener("keydown", on);
+    return () => window.removeEventListener("keydown", on);
+  }, []);
 
   const set = useCallback((p: Partial<Draft>) => { setD((cur) => ({ ...cur, ...p })); setErr(null); }, []);
 
@@ -157,8 +168,8 @@ export function OnboardingFlow({ ctx }: { ctx: OnboardingContext }) {
     <div className="min-h-dvh bg-canvas">
       <header className="sticky top-0 z-30 border-b border-line/70 bg-canvas/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-[1120px] items-center gap-4 px-5 sm:px-8">
-          <Logo compact className="sm:hidden" href="/" />
-          <Logo className="hidden sm:inline-flex" href="/" />
+          <span className="sm:hidden"><Logo compact href="/" /></span>
+          <span className="hidden sm:block"><Logo href="/" /></span>
           <nav aria-label="Onboarding progress" className="ml-auto flex flex-1 items-center justify-end gap-3 sm:max-w-[420px]">
             <ol className="flex flex-1 items-center gap-1.5">
               {STEPS.map((label, i) => {
@@ -183,7 +194,7 @@ export function OnboardingFlow({ ctx }: { ctx: OnboardingContext }) {
       </header>
 
       <main id="main" className="mx-auto grid max-w-[1120px] gap-12 px-5 pb-40 pt-8 sm:px-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-16 lg:pb-20 lg:pt-14">
-        <form onSubmit={submit} noValidate className="min-w-0 lg:max-w-[540px]">
+        <form ref={formRef} onSubmit={submit} noValidate className="min-w-0 lg:max-w-[540px]">
           {step > 1 && (
             <div className="mb-6 lg:hidden"><PreviewCard d={d} fetching={false} variant="mini" /></div>
           )}

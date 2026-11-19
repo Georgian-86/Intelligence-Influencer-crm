@@ -16,8 +16,8 @@ export function AuthScreen({ mode, next, type, notice, demo }: { mode: "register
         <header className="flex items-center justify-between">
           <Logo />
           <Link href={register ? `/login${next !== "/onboarding" ? `?next=${encodeURIComponent(next)}` : ""}` : "/register"}
-            className="inline-flex min-h-11 items-center rounded-full px-3 text-[14px] font-medium text-ink-2 hover:bg-canvas-2">
-            {register ? <>Have an account? <span className="ml-1 font-semibold text-cobalt">Log in</span></> : <>New here? <span className="ml-1 font-semibold text-cobalt">Join</span></>}
+            className="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-full px-3 text-[14px] font-medium text-ink-2 hover:bg-canvas-2">
+            {register ? <><span className="hidden sm:inline">Have an account?</span><span className="ml-1 font-semibold text-cobalt">Log in</span></> : <>New here? <span className="ml-1 font-semibold text-cobalt">Join</span></>}
           </Link>
         </header>
 

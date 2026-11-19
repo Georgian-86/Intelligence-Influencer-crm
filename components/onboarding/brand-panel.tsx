@@ -28,7 +28,7 @@ export function BrandPanel({ creators }: { creators: ShowcaseCreator[] }) {
       <div aria-hidden className="pointer-events-none absolute -bottom-48 -left-24 -z-10 h-[30rem] w-[30rem] rounded-full bg-[radial-gradient(closest-side,rgb(195_181_255/.28),transparent)]" />
 
       {/* rocket trail */}
-      <div aria-hidden className="pointer-events-none absolute right-[14%] top-[8%] -z-10 h-[88%] w-24 origin-bottom rotate-[28deg]">
+      <div aria-hidden className="pointer-events-none absolute right-[24%] bottom-[24%] -z-10 h-[44%] w-24 origin-bottom rotate-[28deg]">
         <motion.div
           className="absolute inset-x-[42%] bottom-0 top-16 rounded-full bg-gradient-to-t from-transparent via-cobalt-400/50 to-ice/90"
           initial={reduce ? false : { scaleY: 0, opacity: 0 }} animate={{ scaleY: 1, opacity: 1 }} style={{ transformOrigin: "bottom" }}
@@ -42,7 +42,7 @@ export function BrandPanel({ creators }: { creators: ShowcaseCreator[] }) {
         ))}
         <motion.div className="absolute left-1/2 top-0 -translate-x-1/2 -rotate-[28deg]"
           initial={reduce ? false : { y: 120, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 1.3, ease: EASE, delay: 0.1 }}>
-          <div className={reduce ? "" : "animate-float"}><LogoMark tone="light" className="h-16 w-16 drop-shadow-[0_0_24px_rgb(220_229_255/.6)]" /></div>
+          <div className={reduce ? "" : "animate-float"}><LogoMark tone="light" className="h-20 w-20 drop-shadow-[0_0_24px_rgb(220_229_255/.6)]" /></div>
         </motion.div>
       </div>
 
@@ -65,7 +65,7 @@ export function BrandPanel({ creators }: { creators: ShowcaseCreator[] }) {
                 animate={{ opacity: depth === 0 ? 1 : depth === 1 ? 0.55 : 0.25, y: -depth * 22, scale: 1 - depth * 0.05 }}
                 exit={{ opacity: 0, y: 30, scale: 1.02, transition: { duration: 0.35 } }}
                 transition={{ duration: 0.6, ease: EASE }} style={{ zIndex: 3 - depth }}>
-                <div className="flex items-center gap-3">
+                <div className={depth ? "invisible" : undefined}><div className="flex items-center gap-3">
                   <Avatar name={c.name} hue={c.hue} size={44} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 text-[15px] font-semibold">{c.name}<BadgeCheck className="h-4 w-4 text-ice" /></div>
@@ -83,7 +83,7 @@ export function BrandPanel({ creators }: { creators: ShowcaseCreator[] }) {
                   </span>
                   <span className="font-display text-[15px] font-semibold tabular-nums">{c.fee}</span>
                 </div>
-              </motion.div>
+              </div></motion.div>
             );
           })}
         </AnimatePresence>

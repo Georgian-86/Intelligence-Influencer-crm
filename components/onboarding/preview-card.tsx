@@ -163,8 +163,8 @@ export function PreviewCard({ d, fetching, variant = "full" }: { d: Draft; fetch
 function CountUpKm({ to }: { to: number }) {
   // Count in the unit that will be displayed (K / M) so the number never jumps format mid-animation.
   if (to >= 1_000_000) return <CountUp to={Math.round(to / 100_000) / 10} decimals={1} suffix="M" />;
-  const k = to / 1000;
-  return <CountUp to={k >= 100 ? Math.round(k) : Math.round(k * 10) / 10} decimals={k >= 100 ? 0 : 1} suffix="K" />;
+  const k = to >= 100_000 ? Math.round(to / 1000) : Math.round(to / 100) / 10;
+  return <CountUp to={k} decimals={Number.isInteger(k) ? 0 : 1} suffix="K" />;
 }
 
 export function Photo({ url, name, size }: { url: string | null; name: string; size: number }) {

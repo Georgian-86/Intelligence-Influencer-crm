@@ -27,17 +27,17 @@ export function Launch({ firstName, openBriefs, onDone }: { firstName: string; o
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: reduce ? 0.1 : 0.35 }}>
       <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 h-[46rem] w-[46rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(43_75_255/.5),transparent)]" />
       <div className="relative">
-        <div aria-hidden className="relative mx-auto h-56 w-40">
+        <div aria-hidden className="relative mx-auto h-44 w-40">
           {/* trail */}
           {!reduce && (
             <motion.div className="absolute bottom-0 left-1/2 h-64 w-3 -translate-x-1/2 rounded-full bg-gradient-to-t from-transparent via-cobalt-400/70 to-ice"
               style={{ transformOrigin: "bottom" }} initial={{ scaleY: 0, opacity: 0 }} animate={{ scaleY: [0, 1, 1], opacity: [0, 1, 0] }}
               transition={{ duration: 1.6, ease: EASE, delay: 0.25, times: [0, 0.5, 1] }} />
           )}
-          <motion.div className="absolute left-1/2 top-6 -translate-x-1/2"
+          <motion.div className="absolute left-1/2 top-2 -translate-x-1/2"
             initial={reduce ? false : { y: 220, opacity: 0 }} animate={{ y: [220, -12, 0], opacity: 1 }}
             transition={{ duration: 1.3, ease: EASE, delay: 0.15 }}>
-            <LogoMark tone="light" className="h-28 w-28 drop-shadow-[0_0_40px_rgb(220_229_255/.6)]" />
+            <LogoMark tone="light" className="h-32 w-32 drop-shadow-[0_0_40px_rgb(220_229_255/.6)]" />
           </motion.div>
           {!reduce && SPARKS.map((s, i) => (
             <motion.span key={i} className="absolute left-1/2 top-1/2 rounded-full" style={{ width: s.s, height: s.s, background: s.c, marginLeft: -s.s / 2, marginTop: -s.s / 2 }}

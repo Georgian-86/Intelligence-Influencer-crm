@@ -34,7 +34,7 @@ export function scoreBrief(b: BriefLike, c: Pick<CreatorVM, "categories" | "city
   if (b.categories.length) {
     const overlap = b.categories.filter((x) => c.categories.includes(x));
     checks.push({ label: `Creates ${b.categories.join(" or ")} content`, ok: overlap.length > 0 });
-    if (overlap.length) { score += 10 + overlap.length * 5; reasons.push(`${overlap[0].replace(" / Campus", "")} niche`); }
+    if (overlap.length) { score += 10 + overlap.length * 5; reasons.push(overlap[0] === "Student / Campus" ? "Campus creator" : `${overlap[0]} niche`); }
   }
 
   // followers
