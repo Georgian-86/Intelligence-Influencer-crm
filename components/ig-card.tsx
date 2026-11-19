@@ -1,3 +1,4 @@
+import { BadgeCheck } from "lucide-react";
 import { fmtNum, imgSrc } from "@/components/ui";
 import { followerTier } from "@/lib/constants";
 
@@ -24,7 +25,7 @@ export function IgCard({ acc, action }: { acc: Acc; action?: React.ReactNode }) 
           )}
           <div>
             <a href={`https://www.instagram.com/${acc.handle}/`} target="_blank" rel="noreferrer" className="font-semibold hover:text-brand">
-              @{acc.handle} {acc.is_verified ? "✓" : ""}
+              @{acc.handle}{acc.is_verified && <BadgeCheck className="ml-1 inline h-4 w-4 text-info" aria-label="Verified" />}
             </a>
             <div className="text-xs text-mute">
               {acc.full_name ?? ""}{acc.business_category ? ` · ${acc.business_category}` : ""}{tier ? ` · ${tier.label}` : ""}

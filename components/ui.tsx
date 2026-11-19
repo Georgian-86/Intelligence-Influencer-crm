@@ -1,4 +1,4 @@
-import Link from "next/link";
+export { Logo } from "@/components/brand/logo";
 import type { ReactNode } from "react";
 
 export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
@@ -39,10 +39,10 @@ const tone: Record<string, string> = {
   confirmed: "border-ok/40 text-ok",
   delivered: "border-ok/60 text-ok",
   dropped: "border-line text-mute",
-  bronze: "border-[#cd7f32]/60 text-[#e0a36b]",
-  silver: "border-[#c0c0c0]/60 text-[#d6d6d6]",
-  gold: "border-[#ffd700]/60 text-[#ffd700]",
-  platinum: "border-[#b4f0ff]/60 text-[#b4f0ff]",
+  bronze: "border-bronze/50 bg-bronze/10 text-bronze",
+  silver: "border-silver/40 bg-silver/10 text-silver",
+  gold: "border-gold/50 bg-gold/10 text-gold",
+  platinum: "border-platinum/50 bg-platinum/10 text-platinum",
   new: "border-brand/50 text-brand",
   in_progress: "border-info/40 text-info",
   converted: "border-ok/40 text-ok",
@@ -81,20 +81,11 @@ export function CheckGroup({ name, options, selected = [], columns = 2 }: { name
     <div className={`grid gap-1.5 ${columns === 3 ? "sm:grid-cols-3" : columns === 1 ? "" : "sm:grid-cols-2"}`}>
       {options.map((o) => (
         <label key={o} className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name={name} value={o} defaultChecked={selected.includes(o)} className="accent-[#ff6a1a]" />
+          <input type="checkbox" name={name} value={o} defaultChecked={selected.includes(o)} className="accent-brand" />
           {o}
         </label>
       ))}
     </div>
-  );
-}
-
-export function Logo({ href = "/" }: { href?: string }) {
-  return (
-    <Link href={href} className="flex items-center gap-2 font-bold tracking-tight">
-      <span className="grid h-7 w-7 place-items-center rounded-md bg-brand text-sm font-black text-black">V</span>
-      <span>Vigor <span className="text-brand">Talent Network</span></span>
-    </Link>
   );
 }
 

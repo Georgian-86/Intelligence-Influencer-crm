@@ -10,7 +10,7 @@ const talentStage: Record<string, [string, string]> = {
   shortlisted: ["Shortlisted", "border-brand/50 text-brand"],
   contacted: ["In discussion", "border-brand/50 text-brand"],
   negotiating: ["In discussion", "border-warn/40 text-warn"],
-  confirmed: ["Confirmed 🎉", "border-ok/40 text-ok"],
+  confirmed: ["Confirmed", "border-ok/40 text-ok"],
   delivered: ["Completed", "border-ok/40 text-ok"],
   rejected: ["Not selected", "border-line text-mute"],
   dropped: ["Closed", "border-line text-mute"],

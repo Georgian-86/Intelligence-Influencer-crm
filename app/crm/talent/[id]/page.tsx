@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge, Empty, fmtINR, fmtNum, imgSrc } from "@/components/ui";
 import { IgCard } from "@/components/ig-card";
+import { Heart, Mail, MessageCircle, Phone, Play } from "lucide-react";
+import { WhatsAppIcon } from "@/components/brand/icons";
 import { createClient } from "@/lib/supabase/server";
 import { can, requireAgency } from "@/lib/session";
 import { RANK_LABEL, type Rank } from "@/lib/constants";
@@ -75,7 +77,7 @@ export default async function CrmTalent({ params }: { params: Promise<{ id: stri
                       <img src={imgSrc(p.thumbnail_url)} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover opacity-90 group-hover:opacity-100" />
                     )}
                     <div className="absolute inset-x-0 bottom-0 bg-black/70 px-1.5 py-1 text-[10px] tabular-nums">
-                      ♥ {fmtNum(p.likes)} · 💬 {fmtNum(p.comments)}{p.views ? ` · ▶ ${fmtNum(p.views)}` : ""}
+                      <span className="inline-flex items-center gap-1"><Heart className="h-3 w-3" />{fmtNum(p.likes)}</span> <span className="ml-1.5 inline-flex items-center gap-1"><MessageCircle className="h-3 w-3" />{fmtNum(p.comments)}</span>{p.views ? <span className="ml-1.5 inline-flex items-center gap-1"><Play className="h-3 w-3" />{fmtNum(p.views)}</span> : null}
                     </div>
                   </a>
                 ))}
@@ -111,9 +113,9 @@ export default async function CrmTalent({ params }: { params: Promise<{ id: stri
             <div className="mb-2 font-semibold">Contact</div>
             {contact ? (
               <div className="space-y-1">
-                <div>📧 <a href={`mailto:${contact.email}`} className="text-brand">{contact.email}</a></div>
-                <div>📞 <a href={`tel:${contact.phone}`}>{contact.phone}</a></div>
-                {contact.whatsapp && <div>💬 <a href={`https://wa.me/${contact.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="text-brand">WhatsApp</a></div>}
+                <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-mute" /><a href={`mailto:${contact.email}`} className="text-brand">{contact.email}</a></div>
+                <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-mute" /><a href={`tel:${contact.phone}`}>{contact.phone}</a></div>
+                {contact.whatsapp && <div className="flex items-center gap-2"><WhatsAppIcon className="h-4 w-4 text-ok" /><a href={`https://wa.me/${contact.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="text-brand">WhatsApp</a></div>}
               </div>
             ) : (
               <p className="text-mute">Contact details unlock once this talent responds to one of your briefs or you add them to a brief.</p>
