@@ -63,7 +63,7 @@ export default function JoinPage() {
               preview={<EventPreview />}
             />
             <ChoiceCard
-              href="/register?type=brand"
+              href="/brands"
               kicker="Brands & agencies"
               title="I hire talent"
               desc="Creators and on-ground teams for launches, sampling and campus campaigns."
