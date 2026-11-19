@@ -50,8 +50,8 @@ The live project `vigor-talent-network` (Mumbai) already has all migrations appl
 
 | Var | Purpose |
 |---|---|
-| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase client |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-only: writes fetched Instagram metrics |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase client — use the **publishable** key (`sb_publishable_…`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only, use the **secret** key (`sb_secret_…`): writes fetched Instagram metrics |
 | `APIFY_TOKEN` | Apify API token |
 | `APIFY_INSTAGRAM_ACTOR` | Defaults to `apify~instagram-profile-scraper` |
 
