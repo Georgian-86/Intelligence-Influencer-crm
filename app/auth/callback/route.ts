@@ -24,9 +24,14 @@ export async function GET(request: NextRequest) {
 
   if (ok) {
     const { data: auth } = await supabase.auth.getUser();
-    if (auth.user && !next.startsWith("/onboarding") && !next.startsWith("/crm") && !next.startsWith("/admin")) {
+    if (auth.user && !next.startsWith("/crm") && !next.startsWith("/admin")) {
       const { data: talent } = await supabase.from("talent_profiles").select("id").eq("user_id", auth.user.id).maybeSingle();
-      if (!talent) return NextResponse.redirect(new URL("/onboarding", url.origin));
+      if (!talent) {
+        const { data: staff } = await supabase.from("memberships").select("organizations(type)").eq("user_id", auth.user.id);
+        const types = (staff ?? []).map((m) => (m.organizations as unknown as { type: string } | null)?.type);
+        const home = types.includes("platform") ? "/admin" : types.includes("agency") ? "/crm" : types.includes("brand") ? "/brand" : next.startsWith("/onboarding") ? next : "/onboarding";
+        return NextResponse.redirect(new URL(home, url.origin));
+      }
     }
     return NextResponse.redirect(new URL(next, url.origin));
   }
