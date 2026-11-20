@@ -103,11 +103,16 @@ export async function signIn(formData: FormData) {
   const next = safeNext(formData.get("next"), "/dashboard");
   if (isDemo()) redirect(next);
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
     console.error("[auth] password sign-in failed", error.code, error.message);
     const msg = /not confirmed/i.test(error.message) ? "Confirm your email first: open the link we sent you." : "Email or password is incorrect.";
     redirect(`/login?error=${encodeURIComponent(msg)}&next=${encodeURIComponent(next)}`);
+  }
+  // Staff accounts (admin, agency, brand) land in their workspace, not the creator dashboard or onboarding.
+  if (next === "/dashboard" || next.startsWith("/onboarding")) {
+    const home = await staffHome(supabase, data.user.id);
+    if (home) redirect(home);
   }
   redirect(next);
 }
@@ -142,4 +147,14 @@ export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/");
+}
+
+/** Workspace for a user with org memberships: admin for platform staff, CRM for agency staff, brand portal for brand users. */
+async function staffHome(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<string | null> {
+  const { data } = await supabase.from("memberships").select("organizations(type)").eq("user_id", userId);
+  const types = (data ?? []).map((m) => (m.organizations as unknown as { type: string } | null)?.type);
+  if (types.includes("platform")) return "/admin";
+  if (types.includes("agency")) return "/crm";
+  if (types.includes("brand")) return "/brand";
+  return null;
 }
