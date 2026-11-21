@@ -8,15 +8,22 @@ import { PageTitle, shortDate } from "@/components/brand-portal/parts";
 import { DownloadPdf } from "@/components/brand-portal/download-pdf";
 import { requireBrand } from "@/lib/brand-access";
 import { getPortalCampaign, REPORTS } from "@/lib/demo/portal";
+import { getBrandCampaign, getBrandReport, type LiveCampaign, type BrandReport } from "@/lib/brand-data";
+import type { BrandAccess } from "@/lib/brand-access";
 
 export const metadata = { title: "Campaign report" };
 
 export default async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const brand = await requireBrand();
   const { id } = await params;
+  const back = <Link href="/brand" className="mb-4 inline-flex items-center gap-1.5 text-[13px] text-mute hover:text-ink"><ArrowLeft className="h-3.5 w-3.5" /> Overview</Link>;
+  if (!brand.demo) {
+    const lc = await getBrandCampaign(brand, id);
+    const lr = lc ? await getBrandReport(brand, id, lc.spent).catch(() => null) : null;
+    if (lc && lr) return <>{back}<LiveReport brand={brand} c={lc} r={lr} /></>;
+  }
   const c = brand.demo ? getPortalCampaign(id) : undefined;
   const r = brand.demo ? REPORTS[id] : undefined;
-  const back = <Link href="/brand" className="mb-4 inline-flex items-center gap-1.5 text-[13px] text-mute hover:text-ink"><ArrowLeft className="h-3.5 w-3.5" /> Overview</Link>;
 
   if (!c || !r) {
     return (
@@ -123,6 +130,86 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
             </li>
           ))}
         </ul>
+      </section>
+    </>
+  );
+}
+
+function LiveReport({ brand, c, r }: { brand: BrandAccess; c: LiveCampaign; r: BrandReport }) {
+  const days = r.days.map((d) => ({ label: shortDate(d.label), value: d.value }));
+  const pctOf = (v: number, t: number) => (t ? ` · ${Math.round((v / t) * 100)}% of ${km(t)} target` : "");
+  const kpis = [
+    { label: "Views", value: km(c.views), sub: `Across ${r.liveCount} live post${r.liveCount === 1 ? "" : "s"}${pctOf(c.views, c.targets.views)}` },
+    { label: "Engagements", value: km(c.engagements), sub: "Likes and comments" },
+    { label: "Engagement rate", value: `${c.er.toFixed(1)}%`, sub: c.targets.er ? `Target ${c.targets.er}%` : "Engagements ÷ views" },
+    { label: "Content live", value: <>{c.deliverables_live}<span className="text-[20px] text-faint"> / {c.deliverables_total}</span></>, sub: `${c.creators_confirmed} creators confirmed` },
+  ];
+  return (
+    <>
+      <PageTitle
+        eyebrow={<span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-ok" aria-hidden /> Live report</span>}
+        title={c.name}
+        subtitle={`${shortDate(c.start_date)} – ${shortDate(c.end_date)}${c.cities.length ? ` · ${c.cities.join(", ")}` : ""}`}
+        actions={<DownloadPdf email={brand.email} />}
+      />
+      <section aria-label="Headline results" className="grid gap-px overflow-hidden rounded-[20px] border border-line bg-line shadow-sm sm:grid-cols-2 lg:grid-cols-4">
+        {kpis.map((k) => (
+          <div key={k.label} className="bg-surface p-5 sm:p-6">
+            <div className="text-[13px] text-mute">{k.label}</div>
+            <div className="mt-2 font-display text-[40px] font-bold leading-none tracking-[-0.04em] tabular-nums">{k.value}</div>
+            <div className="mt-2 text-[12.5px] text-mute">{k.sub}</div>
+          </div>
+        ))}
+      </section>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <section aria-labelledby="daily" className="card p-6">
+          <h2 id="daily" className="mb-4 text-[16px] font-semibold">Daily views</h2>
+          {days.length > 1 ? <>
+            <AreaLine format="km" data={days} ariaLabel="Daily views over the last 14 days" height={260} />
+            <TableView columns={["Day", "Views"]} rows={days.map((d) => [d.label, fmt("num", d.value)])} />
+          </> : <p className="text-[13px] text-mute">The daily chart fills in after a few days of tracking.</p>}
+        </section>
+        <section aria-labelledby="eff" className="card p-6">
+          <h2 id="eff" className="text-[16px] font-semibold">Cost efficiency</h2>
+          <p className="mt-0.5 text-[12.5px] text-mute">Committed creator fees against views so far</p>
+          <div className="mt-5">
+            <div className="flex items-baseline justify-between"><span className="text-[13px] text-ink-2">Cost per 1,000 views (CPM)</span><span className="font-display text-[24px] font-bold tabular-nums">{r.cpm != null ? `₹${r.cpm}` : "—"}</span></div>
+            <div className="mt-4 flex items-baseline justify-between"><span className="text-[13px] text-ink-2">Committed fees</span><span className="font-display text-[20px] font-bold tabular-nums">₹{c.spent.toLocaleString("en-IN")}</span></div>
+          </div>
+        </section>
+      </div>
+
+      {r.byCity.length > 0 && (
+        <section aria-labelledby="city" className="card mt-6 p-6">
+          <h2 id="city" className="mb-4 text-[16px] font-semibold">Views by creator city</h2>
+          <BarList format="km" data={r.byCity} ariaLabel="Views by creator city" labelWidth={84} />
+          <TableView columns={["City", "Views"]} rows={r.byCity.map((d) => [d.label, fmt("num", d.value)])} />
+        </section>
+      )}
+
+      <section aria-labelledby="top" className="mt-6">
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 id="top" className="text-[18px] font-semibold">Top content</h2>
+          <span className="text-[12.5px] text-mute">Ranked by views</span>
+        </div>
+        {r.top.length === 0 ? <p className="text-[13px] text-mute">Views appear once Vigor refreshes numbers for the live posts.</p> : (
+          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            {r.top.map((t, i) => (
+              <li key={t.id} className="min-w-0">
+                <a href={t.url ?? undefined} target="_blank" rel="noreferrer" className="relative block">
+                  <MediaTile hue={t.hue} type={t.kind === "Reel" ? "reel" : "post"} />
+                  <span className="absolute left-2 top-2 grid h-6 w-6 place-items-center rounded-full bg-surface text-[12px] font-bold tabular-nums text-ink shadow-sm">{i + 1}</span>
+                </a>
+                <div className="mt-2 truncate text-[13px] font-medium">@{t.handle}</div>
+                <div className="mt-0.5 flex flex-wrap gap-x-2 text-[12px] tabular-nums text-mute">
+                  <span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" />{km(t.views)}</span>
+                  <span>{t.er}% ER</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </>
   );

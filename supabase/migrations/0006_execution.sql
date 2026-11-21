@@ -629,7 +629,7 @@ begin
       (select coalesce(jsonb_agg(jsonb_build_object('version', v.version, 'caption', v.caption, 'media_url', v.media_url, 'storage_path', v.storage_path, 'at', v.created_at) order by v.version), '[]'::jsonb)
          from deliverable_versions v where v.deliverable_id = d.id) as versions,
       (select coalesce(jsonb_agg(jsonb_build_object('id', m.id, 'role', m.author_role, 'who', coalesce(p.full_name, initcap(m.author_role)), 'body', m.body, 'decision', m.decision, 'version', m.version, 'at', m.created_at) order by m.created_at), '[]'::jsonb)
-         from deliverable_comments m left join profiles p on p.id = m.author_id where m.deliverable_id = d.id and not m.internal) as comments,
+         from deliverable_comments m left join profiles p on p.id = m.author_id where m.deliverable_id = d.id and not m.internal) as thread,
       (select coalesce(jsonb_agg(jsonb_build_object('views', dm.views, 'at', dm.captured_at) order by dm.captured_at), '[]'::jsonb)
          from deliverable_metrics dm where dm.deliverable_id = d.id) as metrics
     from deliverables d

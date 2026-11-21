@@ -77,10 +77,12 @@ export const MILESTONES: Milestone[] = [
 /* ---------- shortlist: brand-safe creator card (no phone/email ever) ---------- */
 export type BrandCreator = {
   id: string; name: string; handle: string; city: string; college: string | null; grad_year: number | null;
-  followers: number; er: number; audience_18_24: number; female: number; avg_views: number; categories: string[];
-  rank: DemoCreator["rank"]; hue: number; verified_insights: boolean; reliability: number;
-  posts: { id: string; type: "reel" | "post" | "carousel"; views: number; hue: number }[];
-  fee: number; match: number; why: string[];
+  followers: number; er: number; audience_18_24: number | null; female: number | null; avg_views: number | null; categories: string[];
+  rank: DemoCreator["rank"]; hue: number; verified_insights: boolean; reliability: number | null;
+  posts: { id: string; type: "reel" | "post" | "carousel"; views: number | null; hue: number; thumb?: string | null; url?: string | null }[];
+  fee: number | null; match: number; why: string[];
+  /** Live mode: a decision the brand already sent, and the brief this creator is for. */
+  decision?: "approve" | "pass" | "question"; note?: string | null; deliverable?: string | null;
 };
 
 const WHY = [
@@ -119,6 +121,8 @@ export type ReviewItem = {
   checks: { label: string; ok: boolean }[];
   history: { version: number; when: string; note: string; by: string; outcome: "changes" | "submitted" }[];
   comments: { who: string; role: "brand" | "agency" | "creator"; when: string; text: string; at?: string }[];
+  /** Live mode: playable upload or external link for the current version. */
+  media?: { url: string; kind: "video" | "image" | "link" } | null;
 };
 
 const CAPS = [
