@@ -4,7 +4,8 @@ import { Clapperboard } from "lucide-react";
 import { EmptyState } from "@/components/kit";
 import { ReviewRoom } from "@/components/crm/review-room";
 import { BrandTile } from "@/components/crm/ui";
-import { requireAgency } from "@/lib/session";
+import { getUser, requireAgency } from "@/lib/session";
+import { isDemo } from "@/lib/demo";
 import { getCreator } from "@/lib/demo/fixtures";
 import { crmNow, getCampaignWorkspace, getSubmissions } from "../../../_lib/data";
 
@@ -15,10 +16,12 @@ export default async function ReviewRoomPage({ params, searchParams }: { params:
   const ws = await getCampaignWorkspace(id, agency.orgId);
   if (!ws) notFound();
   const c = ws.campaign;
-  const items = getSubmissions(id).map((s) => {
-    const t = getCreator(s.creator_id);
-    return { ...s, name: t?.display_name ?? "Creator", handle: t?.handle ?? "" };
+  const items = (await getSubmissions(id, c.brandOrgName ?? c.brand)).map((s) => {
+    const t = s.name ? null : getCreator(s.creator_id);
+    return { ...s, name: s.name ?? t?.display_name ?? "Creator", handle: s.handle ?? t?.handle ?? "" };
   });
+  const user = await getUser();
+  const me = isDemo() ? "Kunal Shah" : ((user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? "You");
 
   return (
     <div className="space-y-4">
@@ -35,7 +38,7 @@ export default async function ReviewRoomPage({ params, searchParams }: { params:
       {items.length === 0 ? (
         <EmptyState icon={<Clapperboard className="h-5 w-5" />} title="No drafts submitted yet" body="Confirmed creators upload drafts from their dashboard. Each version lands here with its own comment thread." />
       ) : (
-        <ReviewRoom items={items} brand={c.brand} now={crmNow()} initialId={d} />
+        <ReviewRoom items={items} brand={c.brandOrgName ?? c.brand} now={crmNow()} initialId={d} me={me} brandLinked={isDemo() || !!c.brandOrgId} />
       )}
     </div>
   );

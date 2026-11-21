@@ -55,7 +55,7 @@ export default async function CrmToday() {
       </header>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Metric label="Reach · 30 days" value={d.kpis.reach != null ? km(d.kpis.reach) : "—"} delta={growth(d.kpis.reachSeries)} spark={d.kpis.reachSeries.length ? d.kpis.reachSeries : undefined} hint={d.kpis.reach == null ? "Connect post links to track reach" : "vs. 4 weeks ago"} />
+        <Metric label={isDemo() ? "Reach · 30 days" : "Views on live posts"} value={d.kpis.reach != null ? km(d.kpis.reach) : "—"} delta={growth(d.kpis.reachSeries)} spark={d.kpis.reachSeries.length ? d.kpis.reachSeries : undefined} hint={d.kpis.reach == null ? "Add live post links to track views" : d.kpis.reachSeries.length ? "vs. 4 weeks ago" : "All campaigns"} />
         <Metric label="Live deliverables" value={d.kpis.live} delta={growth(d.kpis.liveSeries)} spark={d.kpis.liveSeries.length ? d.kpis.liveSeries : undefined} hint="Across active campaigns" />
         <Metric label="Confirmed creators" value={d.kpis.confirmed} delta={growth(d.kpis.confirmedSeries)} spark={d.kpis.confirmedSeries.length ? d.kpis.confirmedSeries : undefined} hint={`${d.campaigns.reduce((s, c) => s + (c.target ?? 0), 0) || "—"} slots planned`} />
         <Metric label="Spend vs budget" value={lakh(d.kpis.spent)} spark={d.kpis.spendSeries.length ? d.kpis.spendSeries : undefined}
