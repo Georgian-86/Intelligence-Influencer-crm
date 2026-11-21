@@ -21,6 +21,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       signOutAction={demo ? undefined : signOut}
       nav={[
         { href: "/admin", label: "Screening", icon: "ShieldCheck", badge: overview.kpis.pending || undefined },
+        { href: "/admin/brands", label: "Brands", icon: "Building2" },
         { href: "/admin/team", label: "Team & roles", icon: "Users" },
       ]}
     >

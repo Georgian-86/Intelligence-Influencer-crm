@@ -5,26 +5,26 @@ import { CountUp } from "@/components/motion/reveal";
 import { Columns, GapHeatmap, Legend, StackedColumns, TableView } from "@/components/cockpit/charts";
 import { SERIES, fmt } from "@/components/cockpit/format";
 import { requireAgency } from "@/lib/session";
-import { isDemo } from "@/lib/demo";
-import { CAMPAIGNS } from "@/lib/demo/fixtures";
-import { DEALS, DEAL_STAGES, FINANCE, MONTHLY_TARGET, PAYOUTS, PAYOUTS_DUE_TOTAL, REVENUE_MONTHS, SLA, SUPPLY_DEMAND, TEAM_LOAD, WEEKLY } from "@/lib/demo/portal";
+import { DEAL_STAGES } from "@/lib/demo/portal";
+import { getCockpit } from "./data";
 
 export const metadata = { title: "Founder cockpit" };
 
 const L = (n: number) => `₹${fmt("compact", n)}`;
 const pct = (n: number) => `${Math.round(n)}%`;
+const ratio = (a: number, b: number) => (b ? a / b : 0);
 
 export default async function Cockpit() {
-  await requireAgency();
-  const demo = isDemo();
+  const { orgId } = await requireAgency();
+  const d = await getCockpit(orgId);
+  const { deals: DEALS, payouts: PAYOUTS, sla: SLA, weekly: WEEKLY, supplyDemand: SUPPLY_DEMAND, teamLoad: TEAM_LOAD, revenueMonths: REVENUE_MONTHS, monthlyTarget: MONTHLY_TARGET } = d;
 
   const open = DEALS.filter((d) => d.stage !== "Won");
   const pipeline = open.reduce((a, d) => a + d.value, 0);
   const weighted = open.reduce((a, d) => a + d.value * d.prob, 0);
-  const rows = CAMPAIGNS.map((c) => {
-    const f = FINANCE[c.id];
-    const margin = c.budget - f.creator_cost;
-    return { ...c, ...f, margin, marginPct: (margin / c.budget) * 100 };
+  const rows = d.rows.map((r) => {
+    const margin = r.budget - r.creator_cost;
+    return { ...r, margin, marginPct: ratio(margin, r.budget) * 100 };
   });
   const revenue = rows.reduce((a, r) => a + r.budget, 0);
   const grossMargin = rows.reduce((a, r) => a + r.margin, 0);
@@ -33,15 +33,18 @@ export default async function Cockpit() {
   const lateReviews = SLA.reviews.filter((r) => r.waiting_hours > SLA.review_hours);
   const latePayouts = PAYOUTS.filter((p) => p.status === "late");
   const breaches = lateReviews.length + latePayouts.length;
-  const maxBudget = Math.max(...rows.map((r) => r.budget));
-  const wk = (a: number[]) => Math.round(((a.at(-1)! - a.at(-2)!) / a.at(-2)!) * 100);
+  const maxBudget = Math.max(1, ...rows.map((r) => r.budget));
+  const wk = (a: number[]) => Math.round(ratio(a.at(-1)! - a.at(-2)!, a.at(-2)!) * 100);
+  const nextMonth = REVENUE_MONTHS[d.forecastFrom + 1] ?? REVENUE_MONTHS.at(-1)!;
+  const nextTotal = nextMonth.won + nextMonth.weighted;
+  const weekLabel = new Date(d.now).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
   const kpis = [
     { label: "Open pipeline", value: <CountUp to={pipeline / 1e5} decimals={1} prefix="₹" suffix="L" />, hint: `${L(weighted)} weighted by stage` },
-    { label: "Booked revenue", value: <CountUp to={revenue / 1e5} decimals={1} prefix="₹" suffix="L" />, hint: `${CAMPAIGNS.length} campaigns this quarter` },
-    { label: "Gross margin", value: <CountUp to={(grossMargin / revenue) * 100} decimals={1} suffix="%" />, hint: `${L(grossMargin)} after creator cost` },
-    { label: "Collected", value: <CountUp to={collected / 1e5} decimals={1} prefix="₹" suffix="L" />, hint: `${pct((collected / invoiced) * 100)} of ${L(invoiced)} invoiced` },
-    { label: "Payouts due", value: <CountUp to={PAYOUTS_DUE_TOTAL / 1e5} decimals={1} prefix="₹" suffix="L" />, hint: `${latePayouts.length} late, next 7 days` },
+    { label: "Booked revenue", value: <CountUp to={revenue / 1e5} decimals={1} prefix="₹" suffix="L" />, hint: `${rows.length} campaigns with a budget` },
+    { label: "Gross margin", value: <CountUp to={ratio(grossMargin, revenue) * 100} decimals={1} suffix="%" />, hint: `${L(grossMargin)} after creator cost` },
+    { label: "Collected", value: <CountUp to={collected / 1e5} decimals={1} prefix="₹" suffix="L" />, hint: `${pct(ratio(collected, invoiced) * 100)} of ${L(invoiced)} invoiced` },
+    { label: "Payouts due", value: <CountUp to={d.payoutsDueTotal / 1e5} decimals={1} prefix="₹" suffix="L" />, hint: `${latePayouts.length} late, next 7 days` },
     { label: "SLA breaches", value: <CountUp to={breaches} />, hint: `${lateReviews.length} reviews > 24h · ${latePayouts.length} payouts late`, alert: breaches > 0 },
   ];
 
@@ -49,15 +52,15 @@ export default async function Cockpit() {
     <>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div className="mb-2 text-[13px] font-medium text-mute">Week 47 · 19 Nov 2026</div>
+          <div className="mb-2 text-[13px] font-medium text-mute">{weekLabel}</div>
           <h1 className="text-[28px] font-bold leading-tight tracking-[-0.035em] sm:text-[36px]">Founder cockpit</h1>
           <p className="mt-2 max-w-2xl text-[15px] text-mute">Money, delivery and capacity on one page. Red means someone needs a nudge today.</p>
         </div>
       </div>
 
-      {!demo && (
+      {rows.length === 0 && DEALS.length === 0 && (
         <p className="mb-6 flex items-center gap-2 rounded-[14px] bg-info-bg px-4 py-3 text-[13.5px] text-info" role="status">
-          <Info className="h-4 w-4 shrink-0" /> Finance, payouts and SLA tracking connect in v2.2. Figures below are sample data until then.
+          <Info className="h-4 w-4 shrink-0" /> Nothing to chart yet. Set a budget on a campaign (Plan &amp; billing tab) and log brand enquiries to fill this page.
         </p>
       )}
 
@@ -76,10 +79,10 @@ export default async function Cockpit() {
         <section aria-labelledby="rev" className="card p-6">
           <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
             <h2 id="rev" className="text-[16px] font-semibold">Revenue and forecast</h2>
-            <span className="text-[12.5px] text-mute">Monthly target {L(MONTHLY_TARGET)}</span>
+            {MONTHLY_TARGET ? <span className="text-[12.5px] text-mute">Monthly target {L(MONTHLY_TARGET)}</span> : null}
           </div>
-          <p className="mb-4 text-[12.5px] text-mute">December is {L(REVENUE_MONTHS[6].won + REVENUE_MONTHS[6].weighted)} if weighted deals close, {pct(((REVENUE_MONTHS[6].won + REVENUE_MONTHS[6].weighted) / MONTHLY_TARGET) * 100)} of target.</p>
-          <StackedColumns data={REVENUE_MONTHS.map((m) => ({ label: m.m, a: m.won, b: m.weighted }))} series={["Booked", "Weighted pipeline"]} target={MONTHLY_TARGET} targetLabel="Monthly target" forecastFrom={5} ariaLabel="Monthly booked revenue and weighted pipeline against target" height={240} />
+          <p className="mb-4 text-[12.5px] text-mute">{nextMonth.m} is {L(nextTotal)} if weighted deals close{MONTHLY_TARGET ? `, ${pct(ratio(nextTotal, MONTHLY_TARGET) * 100)} of target` : ""}.</p>
+          <StackedColumns data={REVENUE_MONTHS.map((m) => ({ label: m.m, a: m.won, b: m.weighted }))} series={["Booked", "Weighted pipeline"]} target={MONTHLY_TARGET ?? undefined} targetLabel="Monthly target" forecastFrom={d.forecastFrom} ariaLabel="Monthly booked revenue and weighted pipeline against target" height={240} />
           <TableView columns={["Month", "Booked", "Weighted pipeline"]} rows={REVENUE_MONTHS.map((m) => [m.m, fmt("inr", m.won), fmt("inr", m.weighted)])} />
         </section>
 
@@ -139,10 +142,10 @@ export default async function Cockpit() {
             <div><dt className="text-[12.5px] text-mute">Outstanding</dt><dd className="font-display text-[22px] font-bold tabular-nums">{L(invoiced - collected)}</dd></div>
           </dl>
           <div className="mt-3 flex h-3 gap-[2px]" aria-hidden>
-            <span className="rounded-l-[4px]" style={{ width: `${(collected / invoiced) * 100}%`, background: SERIES.a }} />
-            <span className="rounded-r-[4px] bg-canvas-2" style={{ width: `${((invoiced - collected) / invoiced) * 100}%` }} />
+            <span className="rounded-l-[4px]" style={{ width: `${ratio(collected, invoiced) * 100}%`, background: SERIES.a }} />
+            <span className="rounded-r-[4px] bg-canvas-2" style={{ width: `${ratio(invoiced - collected, invoiced) * 100}%` }} />
           </div>
-          <div className="mt-1.5 text-[12px] tabular-nums text-mute">{pct((collected / invoiced) * 100)} collected · DSO 34 days</div>
+          <div className="mt-1.5 text-[12px] tabular-nums text-mute">{pct(ratio(collected, invoiced) * 100)} collected</div>
           <h3 className="mt-6 mb-2 text-[13px] font-semibold text-ink-2">Creator payouts due</h3>
           <ul className="divide-y divide-line text-[13.5px]">
             {PAYOUTS.map((p) => (
@@ -150,7 +153,7 @@ export default async function Cockpit() {
                 <span className="min-w-0 flex-1 truncate"><span className="font-medium">{p.creator}</span> <span className="text-mute">· {p.campaign}</span></span>
                 <span className="font-semibold tabular-nums">{fmt("inr", p.amount)}</span>
                 <span className={clsx("w-24 rounded-full px-2 py-0.5 text-center text-[12px] font-medium tabular-nums", p.status === "late" ? "bg-bad-bg text-bad" : "bg-canvas-2 text-ink-2")}>
-                  {p.status === "late" ? `${Math.round((Date.parse("2026-11-19") - Date.parse(p.due)) / 864e5)}d late` : `due ${new Date(p.due + "T00:00:00Z").toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" })}`}
+                  {p.status === "late" ? `${Math.round((d.now - Date.parse(p.due)) / 864e5)}d late` : `due ${new Date(p.due + "T00:00:00Z").toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" })}`}
                 </span>
               </li>
             ))}
@@ -180,9 +183,12 @@ export default async function Cockpit() {
               );
             })}
           </ul>
-          <div className="mt-5 rounded-[14px] bg-bad-bg px-4 py-3 text-[13px] text-bad">
-            <b className="font-semibold">{latePayouts.length} payouts late</b> totalling {fmt("inr", latePayouts.reduce((a, p) => a + p.amount, 0))}. Creators on Freshers&apos; Night Live are waiting.
-          </div>
+          {SLA.reviews.length === 0 && <p className="text-[13px] text-mute">No drafts waiting for review.</p>}
+          {latePayouts.length > 0 && (
+            <div className="mt-5 rounded-[14px] bg-bad-bg px-4 py-3 text-[13px] text-bad">
+              <b className="font-semibold">{latePayouts.length} payouts late</b> totalling {fmt("inr", latePayouts.reduce((a, p) => a + p.amount, 0))}. Creators on {[...new Set(latePayouts.map((p) => p.campaign))].join(", ")} are waiting.
+            </div>
+          )}
         </section>
       </div>
 

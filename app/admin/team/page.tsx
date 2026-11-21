@@ -8,7 +8,7 @@ import { addMember, removeMember } from "../actions";
 
 export const metadata = { title: "Team & roles" };
 
-export default async function Team({ searchParams }: { searchParams: Promise<{ error?: string; saved?: string; demo?: string }> }) {
+export default async function Team({ searchParams }: { searchParams: Promise<{ error?: string; saved?: string; demo?: string; done?: string }> }) {
   await requirePlatform("member.manage");
   const sp = await searchParams;
   const team = await getTeam();
@@ -79,7 +79,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ e
             <select name="role" className="input">{team.roles.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}</select>
           </label>
           <button className="btn-primary w-full">Send invite</button>
-          <p className="text-[12px] text-mute">They get an email link. Live workspaces need the person to have signed up first.</p>
+          <p className="text-[12px] text-mute">{process.env.SUPABASE_SERVICE_ROLE_KEY ? "New people get an email invite. People who already have an account are added straight away." : "People need an account first. Set SUPABASE_SERVICE_ROLE_KEY to send email invites."}</p>
         </form>
       </div>
 

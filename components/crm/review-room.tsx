@@ -2,10 +2,10 @@
 
 import { clsx } from "clsx";
 import { AnimatePresence, motion } from "motion/react";
-import { Check, CircleCheck, Eye, EyeOff, Maximize2, MessageSquareText, Pause, Play, RotateCcw, Send, Volume2, X } from "lucide-react";
+import { Check, CircleCheck, ExternalLink, Eye, EyeOff, Maximize2, MessageSquareText, Pause, Play, RotateCcw, Send, Volume2, X } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { Avatar } from "@/components/kit";
-import { reviewDeliverable } from "@/app/crm/actions";
+import { reviewDeliverable, setDeliverableBrandVisible } from "@/app/crm/actions";
 import { DeliverablePill } from "./ui";
 import { ago, dueLabel } from "./format";
 import { toast } from "./toast";
@@ -13,7 +13,7 @@ import type { ReviewComment, Submission } from "@/lib/demo/crm";
 
 export type ReviewItem = Submission & { name: string; handle: string };
 
-export function ReviewRoom({ items: initial, brand, now, initialId }: { items: ReviewItem[]; brand: string; now: number; initialId?: string }) {
+export function ReviewRoom({ items: initial, brand, now, initialId, me = "You", brandLinked = true }: { items: ReviewItem[]; brand: string; now: number; initialId?: string; me?: string; brandLinked?: boolean }) {
   const [items, setItems] = useState(initial);
   const [sel, setSel] = useState(initialId && initial.some((i) => i.deliverable_id === initialId) ? initialId : initial[0]?.deliverable_id);
   const cur = items.find((i) => i.deliverable_id === sel);
@@ -30,7 +30,29 @@ export function ReviewRoom({ items: initial, brand, now, initialId }: { items: R
   if (!cur) return null;
   const v = cur.versions[ver - 1];
   const latest = ver === cur.versions.length;
-  const add = (body: string): ReviewComment => ({ id: `n${Date.now()}`, who: "Kunal Shah", role: "Agency", body, at: new Date(now).toISOString(), version: cur.versions.length, hue: 12 });
+  const add = (body: string): ReviewComment => ({ id: `n${Date.now()}`, who: me, role: "Agency", body, at: new Date().toISOString(), version: cur.versions.length, hue: 12 });
+
+  const comment = () => {
+    const body = draft.trim();
+    if (!body) return;
+    start(async () => {
+      const res = await reviewDeliverable(cur.deliverable_id, "comment", body);
+      if (!res.ok) { toast(res.error ?? "Couldn't post", { tone: "error" }); return; }
+      patch({ comments: [...cur.comments, add(body)] });
+      setDraft("");
+    });
+  };
+
+  const toggleBrand = () => {
+    if (!brandLinked) { toast("Link a brand account in Plan & billing to share drafts", { tone: "error" }); return; }
+    const next = !cur.brand_visible;
+    patch({ brand_visible: next });
+    start(async () => {
+      const res = await setDeliverableBrandVisible(cur.deliverable_id, next);
+      if (!res.ok) { patch({ brand_visible: !next }); toast(res.error ?? "Couldn't update", { tone: "error" }); return; }
+      toast(next ? `Visible to ${brand} in their review room` : `Hidden from ${brand}`);
+    });
+  };
 
   const decide = (decision: "approve" | "changes") => {
     if (decision === "changes" && !draft.trim()) { toast("Add a comment so the creator knows what to change", { tone: "error" }); document.getElementById("rv-comment")?.focus(); return; }
@@ -87,6 +109,14 @@ export function ReviewRoom({ items: initial, brand, now, initialId }: { items: R
               className="relative aspect-[9/16] h-full max-h-[520px] min-h-[320px] overflow-hidden rounded-[20px] shadow-lg"
               style={{ background: `linear-gradient(165deg, hsl(${(cur.hue + ver * 18) % 360} 85% 74%), hsl(${(cur.hue + 50 + ver * 18) % 360} 70% 50%) 58%, hsl(${(cur.hue + 90) % 360} 60% 24%))` }}>
               <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_30%_22%,rgb(255_255_255/.4),transparent)]" />
+              {v.url && v.media === "video" && <video key={v.url} src={v.url} controls playsInline preload="metadata" className="absolute inset-0 z-10 h-full w-full bg-black object-contain" />}
+              {v.url && v.media === "image" && <img src={v.url} alt={`Draft v${v.v} from ${cur.name}`} className="absolute inset-0 z-10 h-full w-full bg-black object-contain" />}
+              {v.url && v.media === "link" && (
+                <a href={v.url} target="_blank" rel="noreferrer" className="absolute inset-x-6 top-1/3 z-10 flex flex-col items-center gap-2 rounded-[16px] bg-black/45 px-4 py-4 text-center text-[13px] font-semibold backdrop-blur hover:bg-black/55">
+                  <ExternalLink className="h-5 w-5" /> Open draft v{v.v}
+                  <span className="max-w-full truncate text-[11px] font-normal text-white/70">{v.url.replace(/^https?:\/\//, "")}</span>
+                </a>
+              )}
               <button onClick={() => setPlaying((p) => !p)} aria-label={playing ? "Pause" : "Play"} className="absolute left-1/2 top-1/2 grid h-14 w-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-black/30 backdrop-blur transition-transform hover:scale-105">
                 {playing ? <Pause className="h-6 w-6" /> : <Play className="ml-0.5 h-6 w-6" />}
               </button>
@@ -95,7 +125,7 @@ export function ReviewRoom({ items: initial, brand, now, initialId }: { items: R
                 <div className="mt-2 flex items-center gap-2 text-[11px] tabular-nums text-white/75">
                   <span>{playing ? "0:07" : "0:00"}</span>
                   <span className="relative h-1 flex-1 overflow-hidden rounded-full bg-white/25"><span className={clsx("absolute inset-y-0 left-0 rounded-full bg-white transition-[width] duration-[7000ms] ease-linear", playing ? "w-[35%]" : "w-0")} /></span>
-                  <span>{v.duration}</span>
+                  <span>{v.duration || "—"}</span>
                   <Volume2 className="h-3.5 w-3.5" /><Maximize2 className="h-3.5 w-3.5" />
                 </div>
               </div>
@@ -118,7 +148,7 @@ export function ReviewRoom({ items: initial, brand, now, initialId }: { items: R
       <aside className="card flex min-h-0 flex-col overflow-hidden" aria-label="Review">
         <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-3">
           <div><h2 className="text-[14px] font-semibold">Review</h2><div className="mt-0.5"><DeliverablePill status={cur.status} /></div></div>
-          <button role="switch" aria-checked={cur.brand_visible} onClick={() => { patch({ brand_visible: !cur.brand_visible }); toast(!cur.brand_visible ? `Visible to ${brand} in their review room` : `Hidden from ${brand}`); }}
+          <button role="switch" aria-checked={cur.brand_visible} onClick={toggleBrand} disabled={pending}
             className="inline-flex items-center gap-2 rounded-full border border-line px-2.5 py-1.5 text-[12px] font-medium text-ink-2 hover:border-line-2">
             {cur.brand_visible ? <Eye className="h-3.5 w-3.5 text-cobalt" /> : <EyeOff className="h-3.5 w-3.5 text-mute" />}
             <span>{brand}</span>
@@ -150,7 +180,7 @@ export function ReviewRoom({ items: initial, brand, now, initialId }: { items: R
           <label htmlFor="rv-comment" className="sr-only">Comment</label>
           <div className="relative">
             <textarea id="rv-comment" rows={2} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={`Comment on v${cur.versions.length}…`} className="textarea resize-none pr-11 text-[13.5px]" />
-            <button onClick={() => { if (!draft.trim()) return; patch({ comments: [...cur.comments, add(draft.trim())] }); setDraft(""); }} disabled={!draft.trim()} aria-label="Post comment"
+            <button onClick={comment} disabled={!draft.trim() || pending} aria-label="Post comment"
               className="absolute bottom-2.5 right-2.5 grid h-8 w-8 place-items-center rounded-full bg-cobalt text-white disabled:bg-canvas-2 disabled:text-faint"><Send className="h-3.5 w-3.5" /></button>
           </div>
           <div className="mt-2 grid grid-cols-2 gap-2">

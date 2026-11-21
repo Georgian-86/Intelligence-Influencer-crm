@@ -15,6 +15,8 @@ const n = (f: FormData, k: string) => {
   return v ? Number(v) : null;
 };
 const list = (f: FormData, k: string) => f.getAll(k).map(String).filter(Boolean);
+/** Turn Postgres / PostgREST errors into something a person can act on. */
+const friendly = (m: string) => (/row-level security|permission denied/i.test(m) ? "You don't have permission to do that" : m);
 const backOf = (f: FormData, fallback: string) => {
   const b = String(f.get("back") ?? "");
   return b.startsWith("/crm") ? b : fallback;
@@ -222,15 +224,189 @@ export async function convertEnquiry(id: string): Promise<{ ok: boolean; campaig
   return { ok: true, campaignId: data.id };
 }
 
-/**
- * Content review decision on a deliverable version.
- * TODO(deliverables): live mode needs the `deliverables` + `deliverable_versions` tables (v2.1).
- */
-export async function reviewDeliverable(id: string, decision: "approve" | "changes", comment?: string): Promise<{ ok: boolean; error?: string }> {
+/** Content review decision (or plain comment) on the latest version of a deliverable. */
+export async function reviewDeliverable(id: string, decision: "approve" | "changes" | "comment", comment?: string, internal = false): Promise<{ ok: boolean; error?: string }> {
   await requireAgency("pipeline.manage");
   if (isDemo()) return { ok: true };
-  void id; void decision; void comment;
-  return { ok: false, error: "Content review needs the deliverables tables (ships in v2.1)" };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("review_deliverable", { p_id: id, p_decision: decision, p_body: comment ?? "", p_internal: internal });
+  if (error) return { ok: false, error: friendly(error.message) };
+  revalidatePath("/crm/campaigns", "layout");
+  return { ok: true };
+}
+
+/** Show or hide a draft in the brand's review room. */
+export async function setDeliverableBrandVisible(id: string, visible: boolean): Promise<{ ok: boolean; error?: string }> {
+  await requireAgency("pipeline.manage");
+  if (isDemo()) return { ok: true };
+  const supabase = await createClient();
+  const { error } = await supabase.from("deliverables").update({ brand_visible: visible }).eq("id", id);
+  return error ? { ok: false, error: friendly(error.message) } : { ok: true };
+}
+
+/** Add an extra deliverable to a booking (e.g. 3 Stories on top of the Reel). */
+export async function addDeliverable(formData: FormData) {
+  await requireAgency("pipeline.manage");
+  const back = backOf(formData, "/crm/campaigns");
+  if (isDemo()) redirect(back);
+  const supabase = await createClient();
+  const { error } = await supabase.from("deliverables").insert({
+    intent_id: String(formData.get("intent_id")),
+    kind: s(formData, "kind") ?? "Reel",
+    title: s(formData, "title"),
+    due_date: s(formData, "due_date"),
+  });
+  revalidatePath(back);
+  redirect(error ? `${back}${back.includes("?") ? "&" : "?"}error=${encodeURIComponent(friendly(error.message))}` : back);
+}
+
+/** Agency edits on a deliverable: due date, live link, manual metrics, or marking an event shift done. */
+export async function updateDeliverable(formData: FormData) {
+  await requireAgency("pipeline.manage");
+  const back = backOf(formData, "/crm/campaigns");
+  if (isDemo()) redirect(back);
+  const id = String(formData.get("id"));
+  const supabase = await createClient();
+  const patch: Record<string, unknown> = {};
+  if (formData.has("due_date")) patch.due_date = s(formData, "due_date");
+  for (const k of ["views", "likes", "comments"] as const) if (formData.has(k)) patch[k] = n(formData, k);
+  if (Object.keys(patch).length) patch.metrics_at = new Date().toISOString();
+  let error: { message: string } | null = null;
+  if (Object.keys(patch).length) ({ error } = await supabase.from("deliverables").update(patch).eq("id", id));
+  const live = s(formData, "live_url");
+  if (!error && live) ({ error } = await supabase.rpc("submit_live_link", { p_id: id, p_url: live }));
+  if (!error && formData.get("mark_done") === "1") ({ error } = await supabase.from("deliverables").update({ status: "live", posted_at: new Date().toISOString() }).eq("id", id));
+  revalidatePath(back);
+  redirect(error ? `${back}${back.includes("?") ? "&" : "?"}error=${encodeURIComponent(friendly(error.message))}` : back);
+}
+
+/**
+ * Pull views / likes / comments for live Instagram posts. Re-syncs each creator's public profile
+ * (Apify, at most every 6 hours) and matches the post's shortcode against their recent posts.
+ */
+export async function refreshCampaignMetrics(campaignId: string): Promise<{ ok: boolean; updated: number; error?: string }> {
+  await requireAgency("pipeline.manage");
+  if (isDemo()) return { ok: true, updated: 0 };
+  const supabase = await createClient();
+  const { data: rows } = await supabase.from("deliverables").select("id, talent_id, live_url").eq("campaign_id", campaignId).eq("status", "live").not("live_url", "is", null);
+  let updated = 0;
+  const synced = new Set<string>();
+  for (const d of rows ?? []) {
+    const code = String(d.live_url).match(/instagram\.com\/(?:p|reel|reels|tv)\/([\w-]+)/i)?.[1];
+    if (!code) continue;
+    const { data: acc } = await supabase.from("social_accounts").select("id, last_fetched_at").eq("talent_id", d.talent_id).eq("platform", "instagram").maybeSingle();
+    if (!acc) continue;
+    if (!synced.has(acc.id) && (!acc.last_fetched_at || Date.now() - new Date(acc.last_fetched_at).getTime() > 6 * 3600_000)) {
+      synced.add(acc.id);
+      await syncInstagramAccount(acc.id).catch(() => null);
+    }
+    const { data: post } = await supabase.from("social_posts").select("likes, comments, views").eq("account_id", acc.id).eq("shortcode", code).maybeSingle();
+    if (!post) continue;
+    const { error } = await supabase.from("deliverables").update({ views: post.views, likes: post.likes, comments: post.comments, metrics_at: new Date().toISOString() }).eq("id", d.id);
+    if (!error) updated++;
+  }
+  revalidatePath(`/crm/campaigns/${campaignId}`);
+  return { ok: true, updated };
+}
+
+/** Share every shortlisted-or-later creator on this campaign with the linked brand account. */
+export async function shareShortlist(campaignId: string): Promise<{ ok: boolean; shared: number; error?: string }> {
+  const agency = await requireAgency("pipeline.manage");
+  if (isDemo()) return { ok: true, shared: 3 };
+  const supabase = await createClient();
+  const { data: c } = await supabase.from("campaigns").select("brand_org_id").eq("id", campaignId).maybeSingle();
+  if (!c?.brand_org_id) return { ok: false, shared: 0, error: "Link a brand account in Plan & billing first" };
+  const { data: rows } = await supabase
+    .from("intents")
+    .select("id, quoted_rate, agreed_rate, brand_fee, briefs!inner(campaign_id), talent_profiles(rate_per_post)")
+    .eq("briefs.campaign_id", campaignId)
+    .is("shared_with_brand_at", null)
+    .in("stage", ["shortlisted", "contacted", "negotiating", "confirmed"]);
+  const now = new Date().toISOString();
+  let shared = 0;
+  for (const r of rows ?? []) {
+    const t = r.talent_profiles as unknown as { rate_per_post: number | null } | null;
+    const { error } = await supabase.from("intents").update({ shared_with_brand_at: now, brand_fee: r.brand_fee ?? r.agreed_rate ?? r.quoted_rate ?? t?.rate_per_post ?? null }).eq("id", r.id);
+    if (!error) shared++;
+  }
+  await supabase.from("usage_events").insert({ org_id: agency.orgId, kind: "shortlist.shared", ref_id: campaignId }).then(() => null, () => null);
+  revalidatePath(`/crm/campaigns/${campaignId}`);
+  return shared ? { ok: true, shared } : { ok: false, shared: 0, error: "Nothing new to share. Shortlist creators first." };
+}
+
+/** Fee the brand sees for one creator (never the creator's own quote). */
+export async function setBrandFee(intentId: string, fee: number | null): Promise<{ ok: boolean; error?: string }> {
+  await requireAgency("pipeline.manage");
+  if (isDemo()) return { ok: true };
+  const supabase = await createClient();
+  const { error } = await supabase.from("intents").update({ brand_fee: fee && fee > 0 ? Math.round(fee) : null }).eq("id", intentId);
+  return error ? { ok: false, error: friendly(error.message) } : { ok: true };
+}
+
+/** Budget, targets, owner and the brand-portal link. */
+export async function updateCampaignPlan(formData: FormData) {
+  await requireAgency("campaign.manage");
+  const id = String(formData.get("id"));
+  const back = `/crm/campaigns/${id}?tab=money`;
+  if (isDemo()) redirect(`${back}&saved=1`);
+  const supabase = await createClient();
+  const { error } = await supabase.from("campaigns").update({
+    budget: n(formData, "budget"), creators_target: n(formData, "creators_target"), go_live: s(formData, "go_live"),
+    reach_target: n(formData, "reach_target"), views_target: n(formData, "views_target"), er_target: n(formData, "er_target"),
+    owner_id: s(formData, "owner_id"), brand_org_id: s(formData, "brand_org_id"),
+    start_date: s(formData, "start_date"), end_date: s(formData, "end_date"),
+  }).eq("id", id);
+  revalidatePath(`/crm/campaigns/${id}`);
+  redirect(`${back}&${error ? `error=${encodeURIComponent(friendly(error.message))}` : "saved=1"}`);
+}
+
+/** Finance: TDS, approve, mark paid (with UTR) or failed. DB enforces delivery-before-payout (FN-6). */
+export async function updatePayout(formData: FormData) {
+  await requireAgency("finance.manage");
+  const back = backOf(formData, "/crm/cockpit");
+  if (isDemo()) redirect(back);
+  const supabase = await createClient();
+  const patch: Record<string, unknown> = {};
+  if (formData.has("tds")) patch.tds = n(formData, "tds") ?? 0;
+  if (formData.has("amount")) patch.amount = n(formData, "amount") ?? 0;
+  if (formData.has("utr")) patch.utr = s(formData, "utr");
+  const status = s(formData, "status");
+  if (status && ["pending", "approved", "paid", "failed"].includes(status)) patch.status = status;
+  const { error } = await supabase.from("payments").update(patch).eq("id", String(formData.get("id")));
+  revalidatePath(back.split("?")[0]);
+  redirect(error ? `${back}${back.includes("?") ? "&" : "?"}error=${encodeURIComponent(friendly(error.message))}` : back);
+}
+
+export async function createInvoice(formData: FormData) {
+  const agency = await requireAgency("finance.manage");
+  const campaignId = String(formData.get("campaign_id"));
+  const back = `/crm/campaigns/${campaignId}?tab=money`;
+  const amount = n(formData, "amount");
+  if (!amount) redirect(`${back}&error=${encodeURIComponent("Enter the invoice amount before GST")}`);
+  if (isDemo()) redirect(`${back}&saved=1`);
+  const supabase = await createClient();
+  const year = new Date().getFullYear();
+  const { count } = await supabase.from("invoices").select("id", { count: "exact", head: true }).eq("org_id", agency.orgId).like("number", `VIG-${year}-%`);
+  const user = await getUser();
+  const { error } = await supabase.from("invoices").insert({
+    campaign_id: campaignId, org_id: agency.orgId, number: `VIG-${year}-${String((count ?? 0) + 1).padStart(4, "0")}`,
+    label: s(formData, "label"), amount, gst_pct: n(formData, "gst_pct") ?? 18, due_date: s(formData, "due_date"),
+    status: formData.get("send") === "1" ? "sent" : "draft", created_by: user!.id,
+  });
+  revalidatePath(`/crm/campaigns/${campaignId}`);
+  redirect(`${back}&${error ? `error=${encodeURIComponent(friendly(error.message))}` : "saved=1"}`);
+}
+
+export async function setInvoiceStatus(formData: FormData) {
+  await requireAgency("finance.manage");
+  const back = backOf(formData, "/crm/cockpit");
+  if (isDemo()) redirect(back);
+  const status = String(formData.get("status"));
+  if (!["draft", "sent", "paid", "void"].includes(status)) redirect(back);
+  const supabase = await createClient();
+  await supabase.from("invoices").update({ status }).eq("id", String(formData.get("id")));
+  revalidatePath(back.split("?")[0]);
+  redirect(back);
 }
 
 /**

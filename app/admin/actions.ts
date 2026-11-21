@@ -7,6 +7,7 @@ import { getUser, requirePlatform } from "@/lib/session";
 import { isDemo } from "@/lib/demo";
 import { RANKS, TALENT_STATUSES } from "@/lib/constants";
 import { syncInstagramAccount } from "@/lib/instagram";
+import { attachMember, slugify } from "@/lib/invite";
 
 const demoNote = (msg: string) => `demo=${encodeURIComponent(msg)}`;
 
@@ -75,11 +76,49 @@ export async function addMember(formData: FormData) {
   if (!email) redirect(`/admin/team?error=${encodeURIComponent("Enter an email address.")}`);
   if (isDemo()) redirect(`/admin/team?${demoNote(`Invite to ${email} would be sent. Demo mode, so nothing was written.`)}`);
   const supabase = await createClient();
-  const { data: profile } = await supabase.from("profiles").select("id").eq("email", email).maybeSingle();
-  if (!profile) redirect(`/admin/team?error=${encodeURIComponent(`No account found for ${email}. Ask them to sign up first.`)}`);
-  const { error } = await supabase.from("memberships").upsert({ user_id: profile.id, org_id: orgId, role }, { onConflict: "user_id,org_id" });
+  const { data: org } = await supabase.from("organizations").select("type").eq("id", orgId).maybeSingle();
+  const home = org?.type === "brand" ? "/brand" : org?.type === "platform" ? "/admin" : "/crm";
+  const res = await attachMember(supabase, email, orgId, role, home);
   revalidatePath("/admin/team");
-  redirect(`/admin/team?${error ? `error=${encodeURIComponent(error.message)}` : "saved=1"}`);
+  redirect(`/admin/team?${res.ok ? (res.invited ? `done=${encodeURIComponent(`Invite sent to ${email}.`)}` : "saved=1") : `error=${encodeURIComponent(res.error)}`}`);
+}
+
+/** Create a brand workspace, optionally with its first admin. */
+export async function createBrandOrg(formData: FormData) {
+  await requirePlatform("org.manage");
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!name) redirect(`/admin/brands?error=${encodeURIComponent("Enter the brand's name.")}`);
+  if (isDemo()) redirect(`/admin/brands?${demoNote(`${name} would be created${email ? ` and ${email} invited` : ""}. Demo mode, so nothing was written.`)}`);
+  const supabase = await createClient();
+  const base = slugify(name);
+  const { data: taken } = await supabase.from("organizations").select("slug").like("slug", `${base}%`);
+  const slugs = new Set((taken ?? []).map((t) => t.slug));
+  let slug = base;
+  for (let i = 2; slugs.has(slug); i++) slug = `${base}-${i}`;
+  const { data: org, error } = await supabase.from("organizations").insert({ name, slug, type: "brand" }).select("id").single();
+  if (error || !org) redirect(`/admin/brands?error=${encodeURIComponent(error?.message ?? "Could not create the brand.")}`);
+  let note = `${name} created. Link it to a campaign from the campaign's Plan & billing tab.`;
+  if (email) {
+    const res = await attachMember(supabase, email, org.id, "brand_admin", "/brand");
+    note = res.ok ? `${name} created and ${email} ${res.invited ? "invited" : "added as brand admin"}.` : `${name} created, but ${res.error}`;
+    if (!res.ok) { revalidatePath("/admin/brands"); redirect(`/admin/brands?error=${encodeURIComponent(note)}`); }
+  }
+  revalidatePath("/admin/brands");
+  redirect(`/admin/brands?done=${encodeURIComponent(note)}`);
+}
+
+export async function inviteBrandUser(formData: FormData) {
+  await requirePlatform("member.manage");
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const orgId = String(formData.get("org_id"));
+  const role = String(formData.get("role")) === "brand_member" ? "brand_member" : "brand_admin";
+  if (!email) redirect(`/admin/brands?error=${encodeURIComponent("Enter an email address.")}`);
+  if (isDemo()) redirect(`/admin/brands?${demoNote(`Invite to ${email} would be sent. Demo mode, so nothing was written.`)}`);
+  const supabase = await createClient();
+  const res = await attachMember(supabase, email, orgId, role, "/brand");
+  revalidatePath("/admin/brands");
+  redirect(`/admin/brands?${res.ok ? `done=${encodeURIComponent(res.invited ? `Invite sent to ${email}.` : `${email} added.`)}` : `error=${encodeURIComponent(res.error)}`}`);
 }
 
 export async function removeMember(formData: FormData) {

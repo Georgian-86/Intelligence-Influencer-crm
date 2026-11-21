@@ -91,6 +91,15 @@ export type ApplicationVM = {
   deliverables: string | null;
   history: { stage: Stage; at: string }[];
   source: "applied" | "invited";
+  /** Live mode: each piece of content owed on this booking. */
+  work?: WorkItemVM[];
+  payout?: { amount: number; tds: number; net: number; status: "pending" | "approved" | "paid" | "failed"; due: string | null; utr: string | null; paidAt: string | null } | null;
+};
+
+export type WorkItemVM = {
+  id: string; kind: string; title: string | null; due: string | null;
+  status: "brief_sent" | "draft_submitted" | "changes_requested" | "approved" | "live";
+  version: number; liveUrl: string | null; feedback: { who: string; body: string; at: string } | null;
 };
 
 export type EarningsVM = { paid: number; pending: number; months: number[]; labels: string[] };

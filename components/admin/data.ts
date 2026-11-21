@@ -242,3 +242,33 @@ export async function getTeam(): Promise<TeamView> {
     permissions: permKeys.map((k) => ({ key: k, label: PERMISSIONS.find((p) => p.key === k)?.label ?? k })),
   };
 }
+
+export type BrandOrgVM = {
+  id: string; name: string; slug: string; created: string;
+  people: { user_id: string; name: string; email: string; role: string }[];
+  campaigns: { id: string; name: string; status: string }[];
+};
+
+/** Brand workspaces with their people and the campaigns shared to them. */
+export async function getBrandOrgs(): Promise<BrandOrgVM[]> {
+  if (isDemo()) {
+    return [
+      { id: "demo-brand", name: "Brewhouse Coffee", slug: "brewhouse", created: "2026-10-02", people: [{ user_id: "b1", name: "Priya Iyer", email: "priya@brewhouse.in", role: "Brand admin" }], campaigns: [{ id: "k1", name: "Campus Fest Takeover", status: "active" }] },
+    ];
+  }
+  const supabase = await createClient();
+  const [{ data: orgs }, { data: members }, { data: camps }, { data: roles }] = await Promise.all([
+    supabase.from("organizations").select("id, name, slug, created_at").eq("type", "brand").order("name"),
+    supabase.from("memberships").select("user_id, org_id, role, profiles(full_name, email), organizations!inner(type)").eq("organizations.type", "brand"),
+    supabase.from("campaigns").select("id, name, status, brand_org_id").not("brand_org_id", "is", null),
+    supabase.from("roles").select("key, label"),
+  ]);
+  return (orgs ?? []).map((o) => ({
+    id: o.id, name: o.name, slug: o.slug, created: String(o.created_at).slice(0, 10),
+    people: (members ?? []).filter((m) => m.org_id === o.id).map((m) => {
+      const p = m.profiles as unknown as { full_name: string | null; email: string | null } | null;
+      return { user_id: m.user_id, name: p?.full_name ?? p?.email?.split("@")[0] ?? "—", email: p?.email ?? "", role: roles?.find((r) => r.key === m.role)?.label ?? m.role };
+    }),
+    campaigns: (camps ?? []).filter((c) => c.brand_org_id === o.id).map((c) => ({ id: c.id, name: c.name, status: c.status })),
+  }));
+}

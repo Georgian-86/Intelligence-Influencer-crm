@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { brandReview } from "@/app/brand/actions";
 import { AnimatePresence, motion } from "motion/react";
 import { clsx } from "clsx";
-import { Check, CircleCheck, Heart, History, MessageCircle, Play, RotateCcw, Send, Timer, TriangleAlert } from "lucide-react";
+import { Check, CircleCheck, ExternalLink, Heart, History, MessageCircle, Play, RotateCcw, Send, Timer, TriangleAlert } from "lucide-react";
 import { Avatar } from "@/components/kit";
 import type { ReviewItem } from "@/lib/demo/portal";
 
@@ -30,7 +31,9 @@ function slaText(ms: number) {
 }
 const slaTone = (ms: number) => (ms < 0 ? "bad" : ms < 4 * 3600_000 ? "warn" : "ok");
 
-export function ReviewRoom({ items, reasons }: { items: ReviewItem[]; reasons: string[] }) {
+export function ReviewRoom({ items, reasons, brandName = "Brand", me = "You", live = false }: { items: ReviewItem[]; reasons: string[]; brandName?: string; me?: string; live?: boolean }) {
+  const [saving, startSave] = useTransition();
+  const [err, setErr] = useState<string | null>(null);
   const sla = useSla(items);
   const [sel, setSel] = useState(items[0]?.id);
   const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({});
@@ -49,8 +52,25 @@ export function ReviewRoom({ items, reasons }: { items: ReviewItem[]; reasons: s
     setMode("idle"); setChosen([]); setNote("");
     if (n) setTimeout(() => setSel(n.id), 650);
   };
-  const approve = () => { const n = { ...outcomes, [item.id]: { kind: "approved" as const } }; setOutcomes(n); goNext(n); };
-  const requestChanges = () => { const n = { ...outcomes, [item.id]: { kind: "changes" as const, reasons: chosen, note } }; setOutcomes(n); goNext(n); };
+  const persist = (o: Outcome) => startSave(async () => {
+    setErr(null);
+    const r = await brandReview(item.id, o.kind === "approved" ? "approve" : "changes", o.kind === "changes" ? o.reasons : [], o.kind === "changes" ? o.note : "");
+    if (!r.ok) { setErr(r.error ?? "Couldn't save. Try again."); return; }
+    const n = { ...outcomes, [item.id]: o };
+    setOutcomes(n); goNext(n);
+  });
+  const approve = () => persist({ kind: "approved" });
+  const requestChanges = () => persist({ kind: "changes", reasons: chosen, note });
+  const postComment = () => {
+    const text = comment.trim();
+    if (!text) return;
+    startSave(async () => {
+      const r = await brandReview(item.id, "comment", [], text);
+      if (!r.ok) { setErr(r.error ?? "Couldn't post"); return; }
+      setExtra((x) => ({ ...x, [item.id]: [...(x[item.id] ?? []), { who: me, role: "brand", when: "now", text }] }));
+      setComment("");
+    });
+  };
 
   return (
     <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
@@ -98,6 +118,14 @@ export function ReviewRoom({ items, reasons }: { items: ReviewItem[]; reasons: s
           <div className="relative mx-auto aspect-[9/16] w-full max-w-[340px] overflow-hidden rounded-[36px] bg-night p-2 shadow-lg">
             <div className="relative h-full w-full overflow-hidden rounded-[28px]" style={{ background: `linear-gradient(165deg, hsl(${item.hue} 85% 74%), hsl(${(item.hue + 50) % 360} 70% 48%) 55%, hsl(${(item.hue + 90) % 360} 60% 22%))` }}>
               <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_30%_20%,rgb(255_255_255/.45),transparent)]" />
+              {item.media?.kind === "video" && <video key={item.media.url} src={item.media.url} controls playsInline preload="metadata" className="absolute inset-0 z-20 h-full w-full bg-black object-contain" />}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {item.media?.kind === "image" && <img src={item.media.url} alt={`Draft from ${item.creator.name}`} className="absolute inset-0 z-20 h-full w-full bg-black object-contain" />}
+              {item.media?.kind === "link" && (
+                <a href={item.media.url} target="_blank" rel="noreferrer" className="absolute inset-x-6 bottom-28 z-20 flex items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-[13px] font-semibold text-ink shadow-md hover:brightness-95">
+                  <ExternalLink className="h-4 w-4" /> Open draft v{item.version}
+                </a>
+              )}
               <div className="absolute left-3 right-3 top-3 flex gap-1" aria-hidden>{[0, 1, 2].map((k) => <span key={k} className={clsx("h-[3px] flex-1 rounded-full", k === 0 ? "bg-white" : "bg-white/40")} />)}</div>
               <div className="absolute left-3 top-6 flex items-center gap-2 text-[12px] font-semibold text-white">
                 <Avatar name={item.creator.name} hue={item.creator.hue} size={26} ring /> {item.creator.handle}
@@ -136,7 +164,7 @@ export function ReviewRoom({ items, reasons }: { items: ReviewItem[]; reasons: s
                     <div className="font-semibold">{outcome.kind === "approved" ? "Approved. Scheduled to go live." : "Changes requested"}</div>
                     <div className="text-mute">{outcome.kind === "approved" ? "The creator gets a WhatsApp nudge to post within 24 hours." : `${outcome.reasons.join(", ") || "See note"}. ${item.creator.name.split(" ")[0]} has 24h to send v${item.version + 1}.`}</div>
                   </div>
-                  <button onClick={() => setOutcomes(({ [item.id]: _, ...rest }) => (void _, rest))} className="btn-quiet btn-sm">Undo</button>
+                  {!live && <button onClick={() => setOutcomes(({ [item.id]: _, ...rest }) => (void _, rest))} className="btn-quiet btn-sm">Undo</button>}
                 </motion.div>
               ) : mode === "changes" ? (
                 <motion.div key="changes" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-3">
@@ -159,7 +187,7 @@ export function ReviewRoom({ items, reasons }: { items: ReviewItem[]; reasons: s
                   </label>
                   <div className="flex flex-wrap justify-end gap-2">
                     <button onClick={() => setMode("idle")} className="btn-quiet">Cancel</button>
-                    <button onClick={requestChanges} disabled={!chosen.length && !note.trim()} className="btn-dark"><RotateCcw className="h-4 w-4" /> Send change request</button>
+                    <button onClick={requestChanges} disabled={saving || (!chosen.length && !note.trim())} className="btn-dark"><RotateCcw className="h-4 w-4" /> Send change request</button>
                   </div>
                 </motion.div>
               ) : (
@@ -167,11 +195,12 @@ export function ReviewRoom({ items, reasons }: { items: ReviewItem[]; reasons: s
                   <p className="text-[13.5px] text-mute">Vigor QA has passed this draft. Approving schedules it to go live.</p>
                   <div className="grid grid-cols-2 gap-2">
                     <button onClick={() => setMode("changes")} className="btn-ghost btn-lg"><RotateCcw className="h-4 w-4" /> Request changes</button>
-                    <button onClick={approve} className="btn-primary btn-lg"><Check className="h-5 w-5" strokeWidth={2.6} /> Approve</button>
+                    <button onClick={approve} disabled={saving} className="btn-primary btn-lg"><Check className="h-5 w-5" strokeWidth={2.6} /> Approve</button>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
+            {err && <p role="alert" className="mt-3 text-[13px] font-medium text-bad">{err}</p>}
           </section>
 
           <section aria-labelledby="cap" className="card p-5">
@@ -210,16 +239,16 @@ export function ReviewRoom({ items, reasons }: { items: ReviewItem[]; reasons: s
                   <li key={i} className="flex gap-2.5">
                     <Avatar name={c.who} hue={c.role === "brand" ? 12 : c.role === "agency" ? 228 : item.creator.hue} size={28} />
                     <div className="min-w-0 text-[13px]">
-                      <div><span className="font-semibold">{c.who}</span> <span className="text-mute">· {c.role === "brand" ? "Domino's" : c.role === "agency" ? "Vigor" : "Creator"} · {c.when}</span></div>
+                      <div><span className="font-semibold">{c.who}</span> <span className="text-mute">· {c.role === "brand" ? brandName : c.role === "agency" ? "Vigor" : "Creator"} · {c.when}</span></div>
                       <p className="text-ink-2">{c.at && <span className="mr-1 rounded bg-cobalt-50 px-1 font-semibold text-cobalt-700 tabular-nums">{c.at}</span>}{c.text}</p>
                     </div>
                   </li>
                 ))}
               </ul>
-              <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (!comment.trim()) return; setExtra((x) => ({ ...x, [item.id]: [...(x[item.id] ?? []), { who: "Priya Nair", role: "brand", when: "now", text: comment.trim() }] })); setComment(""); }}>
+              <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); postComment(); }}>
                 <label htmlFor="cmt" className="sr-only">Add a comment</label>
                 <input id="cmt" value={comment} onChange={(e) => setComment(e.target.value)} className="input h-10" placeholder="Add a comment" />
-                <button className="btn-ghost h-10 px-3" aria-label="Post comment" disabled={!comment.trim()}><Send className="h-4 w-4" /></button>
+                <button className="btn-ghost h-10 px-3" aria-label="Post comment" disabled={!comment.trim() || saving}><Send className="h-4 w-4" /></button>
               </form>
             </section>
           </div>

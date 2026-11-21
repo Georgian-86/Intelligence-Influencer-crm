@@ -120,10 +120,12 @@ export function Panel({ title, action, children, className, bodyClass, subtitle 
 }
 
 /* ---------- Media tile: stands in for IG thumbnails ---------- */
-export function MediaTile({ hue, type, views, className }: { hue: number; type?: string; views?: number; className?: string }) {
+export function MediaTile({ hue, type, views, className, thumb }: { hue: number; type?: string; views?: number | null; className?: string; thumb?: string | null }) {
   return (
     <div className={clsx("group relative aspect-[4/5] overflow-hidden rounded-[14px]", className)}
       style={{ background: `linear-gradient(160deg, hsl(${hue} 85% 78%), hsl(${(hue + 50) % 360} 70% 52%) 60%, hsl(${(hue + 90) % 360} 60% 28%))` }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {thumb && <img src={thumb} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />}
       <div className="absolute inset-0 bg-[radial-gradient(60%_50%_at_30%_25%,rgb(255_255_255/.45),transparent)] transition-opacity duration-500 group-hover:opacity-70" />
       {type === "reel" && (
         <svg viewBox="0 0 24 24" className="absolute right-2 top-2 h-4 w-4 text-white drop-shadow" aria-hidden><path fill="currentColor" d="M8 5v14l11-7z" /></svg>

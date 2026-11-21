@@ -64,7 +64,15 @@ export type CampaignVM = {
   health: Health;
   reason: string;
   briefs: number;
+  /** Live mode only: the brand account linked to this campaign (brand portal access). */
+  brandOrgId?: string | null;
+  brandOrgName?: string | null;
+  goLive?: string | null;
+  ownerId?: string | null;
+  targets?: { reach: number | null; views: number | null; er: number | null };
 };
+
+export type BrandDecision = "approved" | "passed" | "question";
 
 export type PipelineCard = {
   id: string;
@@ -81,6 +89,11 @@ export type PipelineCard = {
   brief: string;
   source: string;
   updated: string;
+  /** Shortlist sharing with the brand portal. */
+  sharedWithBrand?: boolean;
+  brandDecision?: BrandDecision | null;
+  brandNote?: string | null;
+  brandFee?: number | null;
 };
 
 export type DeliverableRow = {
@@ -94,6 +107,12 @@ export type DeliverableRow = {
   version: number;
   status: DeliverableStatus;
   views: number | null;
+  intentId?: string;
+  brandVisible?: boolean;
+  liveUrl?: string | null;
+  likes?: number | null;
+  comments?: number | null;
+  title?: string | null;
 };
 
 export type EnquiryVM = {
