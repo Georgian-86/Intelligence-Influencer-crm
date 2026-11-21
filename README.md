@@ -38,20 +38,25 @@ npm run dev
 ```
 
 Apply the SQL files in `supabase/migrations/` in order (Supabase SQL editor or `supabase db push`).
-The live project `vigor-talent-network` (Mumbai) already has all migrations applied.
+The live project `vigor-talent-network` (Mumbai) has `0001`–`0005` applied. Run
+`0006_execution.sql` there before deploying this version (see `supabase/README.md`).
 
 ### First admin
 
 1. Sign up on the site (any flow) with your email.
 2. Run `npm run make-admin -- you@yourdomain.com` — grants **Super admin** (platform) and
-   **Agency owner** (Vigor Marketing). Add the rest of the team from **Admin → Team & roles**.
+   **Agency owner** (Vigor Marketing). Add the rest of the team from **Admin → Team & roles**,
+   and brand clients from **Admin → Brands**.
 
 ### Environment variables
 
 | Var | Purpose |
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase client — use the **publishable** key (`sb_publishable_…`) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-only, use the **secret** key (`sb_secret_…`): writes fetched Instagram metrics |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only, use the **secret** key (`sb_secret_…`): writes fetched Instagram metrics and sends email invites from Admin → Team and Admin → Brands |
+| `NEXT_PUBLIC_SITE_URL` | Public URL, used for invite links (defaults to the Vercel URL) |
+| `NEXT_PUBLIC_VIGOR_WHATSAPP` | Optional. Account manager WhatsApp number shown in the brand portal, digits only with country code |
+| `COCKPIT_MONTHLY_TARGET` | Optional. Monthly revenue target in rupees for the founder cockpit chart |
 | `APIFY_TOKEN` | Apify API token |
 | `APIFY_INSTAGRAM_ACTOR` | Defaults to `apify~instagram-profile-scraper` |
 
