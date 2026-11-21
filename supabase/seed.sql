@@ -350,4 +350,61 @@ insert into brand_enquiries (id, company, contact_name, email, phone, city, requ
 insert into brand_enquiries (id, company, contact_name, email, phone, city, requirement, budget, status) values ('50000000-0000-4000-8000-000000000003', 'Byte Phones', 'Rahul Menon', 'rahul@byte.test', '+91 90000 00003', 'Bangalore', 'Tech reviewers for a mid-range launch', '₹2 lakh', 'new') on conflict do nothing;
 insert into brand_enquiries (id, company, contact_name, email, phone, city, requirement, budget, status) values ('50000000-0000-4000-8000-000000000004', 'Snack Co', 'Farah Ali', 'farah@snack.test', '+91 90000 00004', 'Hyderabad', 'Fest stalls with promoters', 'Not sure yet', 'closed') on conflict do nothing;
 
+-- 8. Brand portal account (needs migration 0006). brand@vigor.test is the Brewhouse Coffee brand admin.
+insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token)
+values ('00000000-0000-0000-0000-000000000000', 'a0000000-0000-4000-8000-000000000017', 'authenticated', 'authenticated', 'brand@vigor.test', crypt('VigorTest123!', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Priya Iyer"}', now(), now(), '', '', '', '')
+on conflict (id) do nothing;
+insert into auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+values ('a0000000-0000-4000-8000-000000000017', 'a0000000-0000-4000-8000-000000000017', 'a0000000-0000-4000-8000-000000000017', '{"sub":"a0000000-0000-4000-8000-000000000017","email":"brand@vigor.test","email_verified":true}', 'email', now(), now(), now())
+on conflict do nothing;
+insert into profiles (id, full_name, email) values ('a0000000-0000-4000-8000-000000000017', 'Priya Iyer', 'brand@vigor.test') on conflict (id) do nothing;
+insert into memberships (user_id, org_id, role) values ('a0000000-0000-4000-8000-000000000017', '70000000-0000-4000-8000-000000000001', 'brand_admin') on conflict do nothing;
+
+-- 9. Campaign plans: budgets, targets, owners and the brand link
+update campaigns set brand_org_id = '70000000-0000-4000-8000-000000000001', owner_id = 'a0000000-0000-4000-8000-000000000003',
+  budget = 450000, creators_target = 12, go_live = current_date + 10, reach_target = 1500000, views_target = 2000000, er_target = 5
+  where id = 'd0000000-0000-4000-8000-000000000001' and brand_org_id is null;
+update campaigns set owner_id = 'a0000000-0000-4000-8000-000000000003', budget = 800000, creators_target = 8, go_live = current_date + 24
+  where id = 'd0000000-0000-4000-8000-000000000002' and budget is null;
+update campaigns set owner_id = 'a0000000-0000-4000-8000-000000000001', budget = 300000, creators_target = 3
+  where id = 'd0000000-0000-4000-8000-000000000003' and budget is null;
+
+-- 10. Shortlist shared with the brand (one approved, the rest waiting on the brand)
+insert into intents (id, org_id, brief_id, talent_id, stage, source, message, quoted_rate, agreed_rate, deliverable_links, rating) values ('f0000000-0000-4000-8000-000000000014', '00000000-0000-0000-0000-000000000002', 'e0000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000004', 'shortlisted', 'invited', null, 11000, null, '{}', null) on conflict do nothing;
+update intents set shared_with_brand_at = now() - interval '2 days', brand_fee = 12000 where id = 'f0000000-0000-4000-8000-000000000001' and shared_with_brand_at is null;
+update intents set shared_with_brand_at = now() - interval '1 day', brand_fee = 18000 where id = 'f0000000-0000-4000-8000-000000000002' and shared_with_brand_at is null;
+update intents set shared_with_brand_at = now() - interval '1 day', brand_fee = 8000 where id = 'f0000000-0000-4000-8000-000000000003' and shared_with_brand_at is null;
+update intents set shared_with_brand_at = now() - interval '1 day', brand_fee = 14500 where id = 'f0000000-0000-4000-8000-000000000014' and shared_with_brand_at is null;
+insert into shortlist_decisions (intent_id, org_id, decision, note, decided_by) values ('f0000000-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000002', 'approved', null, 'a0000000-0000-4000-8000-000000000017') on conflict do nothing;
+
+-- 11. Deliverables: Aanya's Reel draft waits for the brand; her Story is live. (Bookings create one deliverable each.)
+update deliverables set kind = 'Reel', title = '1 Reel: campus coffee run', brand_visible = true
+  where intent_id = 'f0000000-0000-4000-8000-000000000001' and kind = 'Reel' and title = '1 reel + 3 stories';
+insert into deliverable_versions (deliverable_id, version, caption, media_url, created_by)
+  select id, 1, 'Exam week fuel at the canteen ☕ @brewhouse.coffee #BrewhouseCampus #ad', 'https://drive.google.com/file/d/MOCKDRAFT1/view', 'a0000000-0000-4000-8000-000000000005'
+  from deliverables where intent_id = 'f0000000-0000-4000-8000-000000000001' and kind = 'Reel'
+  on conflict do nothing;
+insert into deliverable_comments (deliverable_id, version, author_id, author_role, internal, body)
+  select d.id, 1, 'a0000000-0000-4000-8000-000000000003', 'agency', true, 'QA passed: #ad present, audio from the IG library, logo in first 3s.'
+  from deliverables d where d.intent_id = 'f0000000-0000-4000-8000-000000000001' and d.kind = 'Reel'
+    and not exists (select 1 from deliverable_comments c where c.deliverable_id = d.id);
+update deliverables set status = 'draft_submitted'
+  where intent_id = 'f0000000-0000-4000-8000-000000000001' and kind = 'Reel' and status = 'brief_sent';
+insert into deliverables (intent_id, org_id, campaign_id, talent_id, kind, title, due_date, status, brand_visible, live_url, posted_at)
+  select 'f0000000-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000002', 'd0000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001',
+    'Story', '3 Stories with link sticker', current_date - 1, 'live', true, 'https://instagram.com/stories/aanya.eats/MOCKSTORY1', now() - interval '1 day'
+  where not exists (select 1 from deliverables where intent_id = 'f0000000-0000-4000-8000-000000000001' and kind = 'Story');
+update deliverables set views = 18400, likes = 0, comments = 0
+  where intent_id = 'f0000000-0000-4000-8000-000000000001' and kind = 'Story' and views is null;
+update deliverables set views = 41200, likes = 3900, comments = 210 where intent_id = 'f0000000-0000-4000-8000-000000000011' and views is null;
+update deliverables set views = 96500, likes = 7400, comments = 380 where intent_id = 'f0000000-0000-4000-8000-000000000012' and views is null;
+
+-- 12. Money: one payout paid, brand invoices for the Fest and Brewhouse campaigns
+update payments set tds = 1200, status = 'paid', utr = 'UTR-MOCK-0001' where intent_id = 'f0000000-0000-4000-8000-000000000011' and status = 'pending';
+update payments set tds = 1800, status = 'approved' where intent_id = 'f0000000-0000-4000-8000-000000000012' and status = 'pending';
+insert into invoices (id, org_id, campaign_id, number, label, amount, status, issued_on, due_date) values
+  ('40000000-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000002', 'd0000000-0000-4000-8000-000000000003', 'VIG-2026-0001', 'Full fee', 300000, 'paid', current_date - 50, current_date - 20),
+  ('40000000-0000-4000-8000-000000000002', '00000000-0000-0000-0000-000000000002', 'd0000000-0000-4000-8000-000000000001', 'VIG-2026-0002', '50% advance', 225000, 'sent', current_date - 3, current_date + 12)
+on conflict (id) do nothing;
+
 commit;
