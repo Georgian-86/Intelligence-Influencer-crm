@@ -2,10 +2,24 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { isDemo, DEMO_USER } from "@/lib/demo";
+import { cookies } from "next/headers";
+import { isDemo } from "@/lib/demo";
+import { DEMO_COOKIE, PERSONA_USERS, isPersona, type DemoPersona } from "@/lib/demo/persona";
+
+/** Demo mode only: the persona picked on /login, or null when signed out. */
+export const getDemoPersona = cache(async (): Promise<DemoPersona | null> => {
+  if (!isDemo()) return null;
+  const v = (await cookies()).get(DEMO_COOKIE)?.value;
+  return isPersona(v) ? v : null;
+});
 
 export const getUser = cache(async () => {
-  if (isDemo()) return DEMO_USER as unknown as import("@supabase/supabase-js").User;
+  if (isDemo()) {
+    const persona = await getDemoPersona();
+    if (!persona) return null;
+    const u = PERSONA_USERS[persona];
+    return { id: u.id, email: u.email, user_metadata: { full_name: u.name } } as unknown as import("@supabase/supabase-js").User;
+  }
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   return data.user;
@@ -28,12 +42,13 @@ export type OrgAccess = {
 /** All org memberships of the current user with their permission sets. */
 export const getAccess = cache(async (): Promise<OrgAccess[]> => {
   if (isDemo()) {
+    // Each demo persona holds only the membership a real user of that kind would have.
     const all = new Set(["*"]);
-    return [
-      { orgId: "demo-platform", orgName: "Vigor Platform", orgType: "platform", role: "super_admin", perms: all },
-      { orgId: "demo-agency", orgName: "Vigor Launchpad", orgType: "agency", role: "agency_owner", perms: all },
-      { orgId: "demo-brand", orgName: "Domino's India", orgType: "brand", role: "brand_admin", perms: all },
-    ];
+    const persona = await getDemoPersona();
+    if (persona === "admin") return [{ orgId: "demo-platform", orgName: "Vigor Platform", orgType: "platform", role: "platform_ops", perms: all }];
+    if (persona === "agency") return [{ orgId: "demo-agency", orgName: "Vigor Launchpad", orgType: "agency", role: "org_owner", perms: all }];
+    if (persona === "brand") return [{ orgId: "demo-brand", orgName: "Domino's India", orgType: "brand", role: "brand_admin", perms: all }];
+    return [];
   }
   const user = await getUser();
   if (!user) return [];
@@ -60,6 +75,16 @@ export function can(access: OrgAccess | undefined, perm: string) {
 }
 
 /** The agency workspace the CRM operates on (first agency membership for Phase 1). */
+/** Whether the signed-in user has a creator profile (decides if "My talent dashboard" is offered). */
+export const hasTalentProfile = cache(async (): Promise<boolean> => {
+  if (isDemo()) return (await getDemoPersona()) === "creator";
+  const user = await getUser();
+  if (!user) return false;
+  const supabase = await createClient();
+  const { data } = await supabase.from("talent_profiles").select("id").eq("user_id", user.id).maybeSingle();
+  return !!data;
+});
+
 export async function requireAgency(perm = "talent.view") {
   await requireUser("/crm");
   const access = await getAccess();

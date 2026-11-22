@@ -18,7 +18,7 @@ export default async function BrandLayout({ children }: { children: React.ReactN
   if (reportId) nav.push({ href: `/brand/reports/${reportId}`, label: "Reports", icon: "ChartColumnBig", group: "Results" });
   nav.push({ href: "/brand/new-brief", label: "New brief", icon: "Plus", group: "Results" });
   return (
-    <AppShell area="Brand" accent="flame" orgName={brand.orgName} userName={brand.userName} email={brand.email} signOutAction={brand.demo ? undefined : signOut} nav={nav}>
+    <AppShell area="Brand" accent="flame" orgName={brand.orgName} userName={brand.userName} email={brand.email} signOutAction={signOut} nav={nav}>
       {children}
     </AppShell>
   );

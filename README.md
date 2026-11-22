@@ -60,6 +60,13 @@ The live project `vigor-talent-network` (Mumbai) has `0001`–`0005` applied. Ru
 | `APIFY_TOKEN` | Apify API token |
 | `APIFY_INSTAGRAM_ACTOR` | Defaults to `apify~instagram-profile-scraper` |
 
+## Demo mode
+
+Without `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` the app runs on sample data.
+`/login` then offers four demo people (creator, agency team, platform admin, brand client), and each one
+only opens its own area, the same as a real account. On Vercel, add both keys to the **Preview**
+environment as well as Production, or preview deployments fall back to demo mode.
+
 ## Before going live
 
 - **Email:** Supabase's built-in mailer sends only ~2 emails/hour. Configure custom SMTP
