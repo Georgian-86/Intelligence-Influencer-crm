@@ -58,7 +58,8 @@ The live project `vigor-talent-network` (Mumbai) has `0001`–`0005` applied. Ru
 | `NEXT_PUBLIC_VIGOR_WHATSAPP` | Optional. Account manager WhatsApp number shown in the brand portal, digits only with country code |
 | `COCKPIT_MONTHLY_TARGET` | Optional. Monthly revenue target in rupees for the founder cockpit chart |
 | `APIFY_TOKEN` | Apify API token |
-| `APIFY_INSTAGRAM_ACTOR` | Defaults to `apify~instagram-profile-scraper` |
+| `APIFY_INSTAGRAM_ACTOR` | Defaults to `apify~instagram-profile-scraper` (about $2.60 per 1,000 profiles on Apify's free plan) |
+| `APIFY_SYNC_TEST_ACCOUNTS` | Leave unset. Seeded test creators (emails ending `.test`) are never sent to Apify; set `1` to fetch them anyway |
 
 ## Demo mode
 

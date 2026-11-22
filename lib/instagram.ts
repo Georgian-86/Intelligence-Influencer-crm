@@ -101,11 +101,27 @@ function extractContacts(text = "") {
   return { email, phone };
 }
 
+/**
+ * Seeded test talent (accounts whose sign-in email ends in .test, e.g. aanyaeats@creators.test) keep
+ * their sample numbers: their handles are made up or belong to strangers, and each Apify call costs
+ * credits. Set APIFY_SYNC_TEST_ACCOUNTS=1 to fetch them anyway.
+ */
+async function isTestAccount(db: ReturnType<typeof createAdminClient>, talentId: string | null) {
+  if (process.env.APIFY_SYNC_TEST_ACCOUNTS === "1" || !talentId) return false;
+  const { data: t } = await db.from("talent_profiles").select("user_id").eq("id", talentId).maybeSingle();
+  if (!t?.user_id) return false;
+  const { data: p } = await db.from("profiles").select("email").eq("id", t.user_id).maybeSingle();
+  return /\.test$/i.test(p?.email ?? "");
+}
+
 /** Fetch a social account from Apify and store profile, metrics, snapshot and posts. */
 export async function syncInstagramAccount(accountId: string) {
   const db = createAdminClient();
-  const { data: account, error } = await db.from("social_accounts").select("id, handle").eq("id", accountId).single();
+  const { data: account, error } = await db.from("social_accounts").select("id, handle, talent_id").eq("id", accountId).single();
   if (error || !account) throw new Error("Account not found");
+  if (await isTestAccount(db, account.talent_id)) {
+    return { ok: false as const, error: "Test account from the seed data, so it isn't fetched from Instagram." };
+  }
 
   try {
     const p = await fetchInstagramProfile(account.handle);
