@@ -78,6 +78,7 @@ export async function refreshMyInstagram(accountId: string): Promise<Result & { 
   if (recent) return { ok: false, error: "Synced less than an hour ago — try again later." };
   const res = await syncInstagramAccount(acc.id);
   revalidatePath("/dashboard", "layout");
+  if (res.ok && "cached" in res) return { ok: false, error: "Your stats are already saved. Live refresh from Instagram is paused for now." };
   return res.ok ? { ok: true, syncedAt: new Date().toISOString(), message: "Synced from Instagram" } : { ok: false, error: res.error };
 }
 

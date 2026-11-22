@@ -45,7 +45,32 @@ type ApifyProfile = {
   errorDescription?: string;
 };
 
+/**
+ * Apify is paid per profile, so each handle is fetched once and the result kept in instagram_cache.
+ * Every later preview, sync or refresh of that handle reads the stored copy. Set
+ * INSTAGRAM_REFETCH_HOURS to allow a fresh fetch once the stored copy is older than that.
+ */
+const cacheDb = () => (process.env.SUPABASE_SERVICE_ROLE_KEY ? createAdminClient() : null);
+
+async function readCache(handle: string): Promise<ApifyProfile | null> {
+  const db = cacheDb();
+  if (!db) return null;
+  const { data } = await db.from("instagram_cache").select("data, fetched_at").eq("handle", handle.toLowerCase()).maybeSingle();
+  if (!data) return null;
+  const hours = Number(process.env.INSTAGRAM_REFETCH_HOURS ?? "");
+  if (hours > 0 && Date.now() - new Date(data.fetched_at).getTime() > hours * 3600_000) return null;
+  return data.data as ApifyProfile;
+}
+
 export async function fetchInstagramProfile(handle: string): Promise<ApifyProfile> {
+  const cached = await readCache(handle);
+  if (cached) return cached;
+  const fresh = await fetchFromApify(handle);
+  await cacheDb()?.from("instagram_cache").upsert({ handle: handle.toLowerCase(), data: fresh, fetched_at: new Date().toISOString() });
+  return fresh;
+}
+
+async function fetchFromApify(handle: string): Promise<ApifyProfile> {
   const actor = process.env.APIFY_INSTAGRAM_ACTOR || "apify~instagram-profile-scraper";
   const res = await fetch(
     `https://api.apify.com/v2/acts/${actor}/run-sync-get-dataset-items?timeout=120`,
@@ -114,13 +139,25 @@ async function isTestAccount(db: ReturnType<typeof createAdminClient>, talentId:
   return /\.test$/i.test(p?.email ?? "");
 }
 
-/** Fetch a social account from Apify and store profile, metrics, snapshot and posts. */
+/** True only when INSTAGRAM_REFETCH_HOURS is set and the stored copy is older than that. */
+async function canRefetch(handle: string) {
+  const hours = Number(process.env.INSTAGRAM_REFETCH_HOURS ?? "");
+  if (!(hours > 0)) return false;
+  return (await readCache(handle)) === null;
+}
+
+/** Fetch a social account (once per handle) and store profile, metrics, snapshot and posts. */
 export async function syncInstagramAccount(accountId: string) {
   const db = createAdminClient();
   const { data: account, error } = await db.from("social_accounts").select("id, handle, talent_id").eq("id", accountId).single();
   if (error || !account) throw new Error("Account not found");
   if (await isTestAccount(db, account.talent_id)) {
     return { ok: false as const, error: "Test account from the seed data, so it isn't fetched from Instagram." };
+  }
+  // Already stored for this account: nothing to fetch, and no repeat follower-count polling.
+  const { data: state } = await db.from("social_accounts").select("fetch_status, last_fetched_at").eq("id", account.id).single();
+  if (state?.fetch_status === "ok" && state.last_fetched_at && !(await canRefetch(account.handle))) {
+    return { ok: true as const, cached: true };
   }
 
   try {

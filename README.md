@@ -39,7 +39,7 @@ npm run dev
 
 Apply the SQL files in `supabase/migrations/` in order (Supabase SQL editor or `supabase db push`).
 The live project `vigor-talent-network` (Mumbai) has `0001`–`0005` applied. Run
-`0006_execution.sql` there before deploying this version (see `supabase/README.md`).
+`0006_execution.sql` and `0007_instagram_cache.sql` there before deploying this version (see `supabase/README.md`).
 
 ### First admin
 
@@ -59,6 +59,7 @@ The live project `vigor-talent-network` (Mumbai) has `0001`–`0005` applied. Ru
 | `COCKPIT_MONTHLY_TARGET` | Optional. Monthly revenue target in rupees for the founder cockpit chart |
 | `APIFY_TOKEN` | Apify API token |
 | `APIFY_INSTAGRAM_ACTOR` | Defaults to `apify~instagram-profile-scraper` (about $2.60 per 1,000 profiles on Apify's free plan) |
+| `INSTAGRAM_REFETCH_HOURS` | Leave unset. Each handle is fetched from Apify once and stored (`instagram_cache`); refreshes reuse it. Set e.g. `168` to allow a fresh fetch once a week |
 | `APIFY_SYNC_TEST_ACCOUNTS` | Leave unset. Seeded test creators (emails ending `.test`) are never sent to Apify; set `1` to fetch them anyway |
 
 ## Demo mode

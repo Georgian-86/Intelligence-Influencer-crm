@@ -1,12 +1,12 @@
 # Supabase setup
 
 ## Fresh project
-1. In the Supabase dashboard, open **SQL editor** and run each file in `migrations/` in order (`0001` → `0006`).
+1. In the Supabase dashboard, open **SQL editor** and run each file in `migrations/` in order (`0001` → `0007`).
 2. Run `seed.sql` to load mock data for testing. It is safe to run more than once.
 
 ## Project that already has the original tables
 Run any migrations it hasn't had yet, in order. A project that already has `0005` needs only
-`migrations/0006_execution.sql` (deliverables, content review, brand sharing, payouts, invoices and the
+`migrations/0006_execution.sql` and `migrations/0007_instagram_cache.sql` (deliverables, content review, brand sharing, payouts, invoices and the
 private `deliverables` storage bucket), then `seed.sql`. `0006` is safe to run more than once.
 
 With the Supabase CLI linked to the project, `supabase db push` applies the migrations and
