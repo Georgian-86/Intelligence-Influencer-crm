@@ -91,9 +91,13 @@ async function fetchFromApify(handle: string): Promise<ApifyProfile> {
   }
   const items = (await res.json()) as ApifyProfile[];
   const profile = items?.[0];
-  if (!profile || profile.error) {
+  // Apify sometimes flags a profile (e.g. "Restricted profile") but still returns its public data.
+  // Only treat it as a failure when there is no usable data at all.
+  const usable = !!profile && (typeof profile.followersCount === "number" || !!profile.username);
+  if (!profile || (profile.error && !usable)) {
     throw new Error(profile?.errorDescription || profile?.error || "Profile not found or not public");
   }
+  if (profile.error) console.warn("[instagram] Apify flagged profile but returned data", handle, profile.error);
   return profile;
 }
 
