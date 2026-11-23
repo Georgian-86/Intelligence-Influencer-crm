@@ -84,7 +84,11 @@ async function fetchFromApify(handle: string): Promise<ApifyProfile> {
       cache: "no-store",
     },
   );
-  if (!res.ok) throw new Error(`Apify request failed (${res.status})`);
+  if (!res.ok) {
+    const body = (await res.text().catch(() => "")).slice(0, 300);
+    console.error("[instagram] Apify request failed", res.status, body);
+    throw new Error(res.status === 402 || /usage|credit|limit/i.test(body) ? "Apify credit used up" : `Apify request failed (${res.status})`);
+  }
   const items = (await res.json()) as ApifyProfile[];
   const profile = items?.[0];
   if (!profile || profile.error) {
