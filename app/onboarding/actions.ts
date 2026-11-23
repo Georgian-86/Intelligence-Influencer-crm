@@ -63,6 +63,7 @@ async function livePreview(handle: string): Promise<PreviewResult> {
   } catch (e) {
     const msg = e instanceof Error ? e.message : "";
     console.error("[onboarding] Instagram preview failed", handle, msg);
+    if (/restricted/i.test(msg)) return { ok: false, code: "unavailable", error: `Instagram limits what it shows about @${handle}, so we can't read its stats. Continue and add your details yourself.` };
     return /not found|not public|does not exist/i.test(msg)
       ? { ok: false, code: "not_found", error: `We couldn't find @${handle}. Check the spelling, or make sure the account is public.` }
       : { ok: false, code: "unavailable", error: "Instagram is slow to respond right now. Continue and we'll sync your stats in the background." };
