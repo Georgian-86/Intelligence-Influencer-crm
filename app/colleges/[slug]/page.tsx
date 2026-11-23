@@ -84,7 +84,7 @@ export default async function CollegePage({ params }: Props) {
                 A {k.kind} campus in {city.name}. {k.angle}
               </p>
             </div>
-            <div className="rounded-[28px] bg-night p-6 text-white shadow-lg sm:p-8">
+            <div className="rounded-[20px] bg-night p-6 text-white shadow-lg sm:p-8">
               <p className="text-[14px] text-white/70">Studying at {short}?</p>
               <p className="mt-2 font-display text-[28px] font-bold leading-[1.05] tracking-[-0.035em]">We ask one question: <em className="font-serif font-normal text-cobalt-300">are you in college?</em></p>
               <ul className="mt-5 space-y-2 text-[14.5px] text-white/85">

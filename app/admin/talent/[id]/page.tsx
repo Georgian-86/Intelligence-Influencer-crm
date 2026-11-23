@@ -33,7 +33,7 @@ export default async function AdminTalent({ params, searchParams }: { params: Pr
         <Avatar name={t.name} hue={t.hue} size={64} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-[28px] font-bold leading-tight tracking-[-0.035em]">{t.name}</h1>
+            <h1 className="text-[24px] leading-tight sm:text-[26px]">{t.name}</h1>
             <span className={clsx("rounded-full px-2.5 py-0.5 text-[12px] font-semibold capitalize", STATUS_TONE[t.status])}>{t.status}</span>
             <span className={clsx("rounded-full px-2.5 py-0.5 text-[12px] font-semibold capitalize", RANK_TONE[t.rank])}>{t.rank}</span>
           </div>
@@ -74,7 +74,7 @@ export default async function AdminTalent({ params, searchParams }: { params: Pr
             </div>
             {!ig ? <p className="text-[14px] text-mute">No Instagram account linked. Event talent may skip this; ask for a showreel instead.</p> : (
               <>
-                <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-6">
+                <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-[12px] border border-line bg-line sm:grid-cols-6">
                   {[["Followers", km(ig.followers)], ["Following", km(ig.following)], ["Posts", km(ig.posts)], ["Avg likes", km(ig.avg_likes)], ["Avg comments", km(ig.avg_comments)], ["Avg views", km(ig.avg_views)]].map(([l, v]) => (
                     <div key={l} className="bg-surface px-3 py-3"><dt className="text-[11.5px] text-mute">{l}</dt><dd className="mt-0.5 font-display text-[19px] font-bold tabular-nums">{v}</dd></div>
                   ))}

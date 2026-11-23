@@ -21,7 +21,7 @@ export function Breadcrumbs({ items }: { items: { name: string; href?: string }[
 
 export function StatRow({ stats }: { stats: { value: ReactNode; label: string }[] }) {
   return (
-    <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-[28px] border border-line bg-line sm:grid-cols-4">
+    <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-[20px] border border-line bg-line sm:grid-cols-4">
       {stats.map((s) => (
         <div key={s.label} className="bg-surface p-5 sm:p-6">
           <dt className="text-[13px] text-mute">{s.label}</dt>

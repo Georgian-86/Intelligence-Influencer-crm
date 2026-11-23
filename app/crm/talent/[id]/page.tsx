@@ -51,7 +51,7 @@ export default async function Creator360({ params }: { params: Promise<{ id: str
         <div className="flex flex-wrap items-end gap-x-6 gap-y-4 px-5 pb-5 sm:px-6">
           <div className="-mt-12 rounded-full bg-surface p-1 shadow-sm"><Avatar name={r.name} hue={r.hue} size={88} /></div>
           <div className="min-w-0 flex-1 pt-3">
-            <h1 className="flex items-center gap-2 font-display text-[26px] font-semibold tracking-[-0.035em] sm:text-[30px]">
+            <h1 className="flex items-center gap-2 text-[24px] leading-tight sm:text-[26px]">
               {r.name}{r.verified && <BadgeCheck className="h-6 w-6 text-cobalt" aria-label="Verified insights" />}
             </h1>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13.5px] text-mute">

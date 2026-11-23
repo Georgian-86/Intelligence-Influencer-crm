@@ -87,7 +87,7 @@ export function ShortlistDeck({ creators, target, campaignName, deliverable, cam
     <div>
       {/* Summary bar */}
       <div className="sticky top-16 z-20 mb-6">
-        <div className={clsx("flex flex-wrap items-center gap-x-6 gap-y-3 rounded-[22px] border px-5 py-3.5 shadow-md backdrop-blur-xl", sent ? "border-ok/30 bg-ok-bg/95" : "border-line bg-surface/95")} aria-live="polite">
+        <div className={clsx("flex flex-wrap items-center gap-x-6 gap-y-3 rounded-[14px] border px-5 py-3.5 shadow-md backdrop-blur-xl", sent ? "border-ok/30 bg-ok-bg/95" : "border-line bg-surface/95")} aria-live="polite">
           {sent ? (
             <p className="flex items-center gap-2 text-[14px] font-medium text-ok"><Check className="h-4 w-4" /> Sent to Vigor. {amName.split(" ")[0]} will lock contracts with {approved.length} creator{approved.length === 1 ? "" : "s"} and reply to your questions.</p>
           ) : (
@@ -127,8 +127,8 @@ export function ShortlistDeck({ creators, target, campaignName, deliverable, cam
           </div>
           <div className="relative">
             {/* stacked deck hint */}
-            <div aria-hidden className="absolute inset-x-6 -bottom-2 top-4 rounded-[28px] border border-line bg-surface/70" />
-            <div aria-hidden className="absolute inset-x-12 -bottom-4 top-8 rounded-[28px] border border-line bg-surface/40" />
+            <div aria-hidden className="absolute inset-x-6 -bottom-2 top-4 rounded-[14px] border border-line bg-surface/70" />
+            <div aria-hidden className="absolute inset-x-12 -bottom-4 top-8 rounded-[14px] border border-line bg-surface/40" />
             <AnimatePresence mode="popLayout" custom={dir} initial={false}>
               {current && (
                 <SwipeCard key={current.id} c={current} dir={dir} decision={decisions[current.id]} deliverable={deliverable}
@@ -208,7 +208,7 @@ function SwipeCard({ c, dir, decision, deliverable, onSwipe, asking, setAsking, 
       transition={{ type: "spring", stiffness: 380, damping: 34 }}
       drag={disabled || asking ? false : "x"} dragConstraints={{ left: 0, right: 0 }} dragElastic={0.85} onDragEnd={onEnd}
       style={{ x, rotate }}
-      className="relative z-10 touch-pan-y select-none overflow-hidden rounded-[28px] border border-line bg-surface shadow-md"
+      className="relative z-10 touch-pan-y select-none overflow-hidden rounded-[14px] border border-line bg-surface shadow-md"
       aria-label={`${c.name}, ${km(c.followers)} followers`}
     >
       <motion.div style={{ opacity: approveO }} className="pointer-events-none absolute left-6 top-6 z-20 rotate-[-8deg] rounded-[10px] border-2 border-ok px-3 py-1 font-display text-[20px] font-bold text-ok">APPROVE</motion.div>
@@ -235,7 +235,7 @@ function SwipeCard({ c, dir, decision, deliverable, onSwipe, asking, setAsking, 
             {decision && <DecisionDot d={decision.d} />}
           </div>
 
-          <dl className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-[16px] border border-line bg-line sm:grid-cols-4">
+          <dl className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-[12px] border border-line bg-line sm:grid-cols-4">
             {[
               ["Followers", km(c.followers)],
               ["Engagement", `${c.er.toFixed(1)}%`],

@@ -29,7 +29,7 @@ export default async function EditAll({ searchParams }: { searchParams: Promise<
   return (
     <div className="mx-auto max-w-3xl">
       <Link href="/dashboard/profile" className="-ml-2 inline-flex min-h-11 items-center gap-1.5 rounded-full px-2 text-[14px] font-medium text-mute hover:text-ink"><ArrowLeft className="h-4 w-4" /> Profile</Link>
-      <h1 className="mt-2 font-display text-[34px] font-bold tracking-[-0.04em]">All details</h1>
+      <h1 className="mt-2 text-[24px] leading-tight sm:text-[26px]">All details</h1>
       <p className="mb-6 mt-1 text-[15px] text-mute">Everything in one place. Most of this is optional — we ask when a brief needs it.</p>
       <TalentForm talent={talent} contact={contact} instagram={c.handle} media={media} defaultType="influencer" back="/dashboard/profile/edit" error={sp.error} submitLabel="Save changes" />
     </div>

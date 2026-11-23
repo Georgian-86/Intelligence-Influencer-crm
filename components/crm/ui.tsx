@@ -17,7 +17,7 @@ export function PageHeader({ title, subtitle, actions, back, meta }: { title: Re
       )}
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
-          <h1 className="font-display text-[26px] font-semibold leading-[1.15] tracking-[-0.035em] text-ink sm:text-[30px]">{title}</h1>
+          <h1 className="text-ink text-[24px] leading-tight sm:text-[26px]">{title}</h1>
           {subtitle && <p className="mt-1 text-[14px] text-mute">{subtitle}</p>}
           {meta && <div className="mt-2.5 flex flex-wrap items-center gap-2">{meta}</div>}
         </div>
@@ -36,7 +36,7 @@ const HEALTH: Record<Health, { label: string; cls: string; Icon: typeof CheckCir
 export function HealthBadge({ health, className }: { health: Health; className?: string }) {
   const h = HEALTH[health];
   return (
-    <span className={clsx("inline-flex h-6 items-center gap-1 rounded-full px-2 text-[12px] font-semibold", h.cls, className)}>
+    <span className={clsx("inline-flex h-6 items-center gap-1 rounded-[6px] px-2 text-[12px] font-semibold", h.cls, className)}>
       <h.Icon className="h-3.5 w-3.5" strokeWidth={2.2} /> {h.label}
     </span>
   );
@@ -56,7 +56,7 @@ const DELIV_DOT: Record<string, string> = {
 
 export function DeliverablePill({ status }: { status: string }) {
   return (
-    <span className={clsx("inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-[12px] font-semibold", DELIV_TONE[status] ?? "bg-canvas-2 text-ink-2")}>
+    <span className={clsx("inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-[6px] px-2.5 text-[12px] font-semibold", DELIV_TONE[status] ?? "bg-canvas-2 text-ink-2")}>
       <span className={clsx("h-1.5 w-1.5 rounded-full", DELIV_DOT[status] ?? "bg-faint")} aria-hidden />
       {DELIVERABLE_LABEL[status] ?? status}
     </span>
@@ -68,7 +68,7 @@ const STAGE_TONE: Record<string, string> = {
   negotiating: "bg-warn-bg text-warn", confirmed: "bg-ok-bg text-ok", delivered: "bg-ok text-white", rejected: "bg-bad-bg text-bad", dropped: "bg-canvas-2 text-mute",
 };
 export function StagePill({ stage }: { stage: string }) {
-  return <span className={clsx("inline-flex h-6 items-center whitespace-nowrap rounded-full px-2.5 text-[12px] font-semibold", STAGE_TONE[stage] ?? "bg-canvas-2 text-ink-2")}>{STAGE_LABEL[stage] ?? stage}</span>;
+  return <span className={clsx("inline-flex h-6 items-center whitespace-nowrap rounded-[6px] px-2.5 text-[12px] font-semibold", STAGE_TONE[stage] ?? "bg-canvas-2 text-ink-2")}>{STAGE_LABEL[stage] ?? stage}</span>;
 }
 
 const RANK_STYLE: Record<string, string> = {
@@ -116,7 +116,7 @@ export function LinkTabs({ items, active }: { items: { href: string; label: stri
           <Link key={t.key} href={t.href} scroll={false} aria-current={on ? "page" : undefined}
             className={clsx("relative inline-flex h-11 shrink-0 items-center gap-2 px-3 text-[14px] font-medium transition-colors", on ? "text-ink" : "text-mute hover:text-ink")}>
             {t.label}
-            {t.count != null && <span className={clsx("rounded-full px-1.5 text-[11px] font-semibold tabular-nums", on ? "bg-cobalt text-white" : "bg-canvas-2 text-ink-2")}>{t.count}</span>}
+            {t.count != null && <span className="rounded-full bg-canvas-2 px-1.5 text-[11px] font-semibold tabular-nums text-ink-2">{t.count}</span>}
             {on && <span className="absolute inset-x-2 -bottom-px h-[2px] rounded-full bg-cobalt" />}
           </Link>
         );
@@ -129,7 +129,7 @@ export function LinkTabs({ items, active }: { items: { href: string; label: stri
 export function BrandTile({ name, hue, size = 40, className }: { name: string; hue: number; size?: number; className?: string }) {
   const initials = name.replace(/[^A-Za-z0-9 ]/g, "").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
   return (
-    <span aria-hidden className={clsx("inline-grid shrink-0 place-items-center rounded-[12px] font-display font-bold text-white", className)}
+    <span aria-hidden className={clsx("inline-grid shrink-0 place-items-center rounded-[10px] font-display font-bold text-white", className)}
       style={{ width: size, height: size, fontSize: size * 0.36, background: `linear-gradient(145deg, hsl(${hue} 78% 58%), hsl(${(hue + 35) % 360} 70% 38%))` }}>
       {initials}
     </span>
@@ -155,7 +155,7 @@ export function BurnMeter({ spent, budget, elapsed, className }: { spent: number
 export function SectionTitle({ children, action, count }: { children: ReactNode; action?: ReactNode; count?: number }) {
   return (
     <div className="mb-3 flex items-center justify-between gap-3">
-      <h2 className="flex items-center gap-2 font-display text-[17px] font-semibold tracking-[-0.025em]">
+      <h2 className="flex items-center gap-2 text-[16px] font-semibold">
         {children}
         {count != null && <span className="rounded-full bg-canvas-2 px-2 py-0.5 font-sans text-[12px] font-semibold tabular-nums text-ink-2">{count}</span>}
       </h2>

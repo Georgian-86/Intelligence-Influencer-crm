@@ -17,7 +17,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ e
   return (
     <>
       <div className="mb-8">
-        <h1 className="text-[28px] font-bold leading-tight tracking-[-0.035em] sm:text-[36px]">Team & roles</h1>
+        <h1 className="text-[24px] leading-tight sm:text-[26px]">Team & roles</h1>
         <p className="mt-2 max-w-2xl text-[15px] text-mute">Who can see and change what across the CRM, admin and finance.</p>
       </div>
       <ActionNotice sp={sp} />

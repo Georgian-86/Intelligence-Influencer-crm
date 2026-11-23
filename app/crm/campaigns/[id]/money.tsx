@@ -87,7 +87,7 @@ export async function MoneyTab({ agency, ws }: { agency: OrgAccess; ws: Campaign
                     <td className="text-right tabular-nums text-ink-2">{inr(p.tds)}</td>
                     <td className="text-right font-semibold tabular-nums">{inr(p.amount - p.tds)}</td>
                     <td className="tabular-nums text-ink-2">{p.status === "paid" ? <span className="inline-flex items-center gap-1 text-ok"><CircleCheck className="h-3.5 w-3.5" />{shortDate(p.paidAt?.slice(0, 10))}</span> : shortDate(p.due)}</td>
-                    <td><span className={clsx("inline-flex h-6 items-center rounded-full px-2 text-[12px] font-semibold capitalize", PAY_TONE[p.status])}>{p.status}</span>{p.utr && <div className="mt-0.5 text-[11px] text-mute">UTR {p.utr}</div>}</td>
+                    <td><span className={clsx("inline-flex h-6 items-center rounded-[6px] px-2 text-[12px] font-semibold capitalize", PAY_TONE[p.status])}>{p.status}</span>{p.utr && <div className="mt-0.5 text-[11px] text-mute">UTR {p.utr}</div>}</td>
                     <td>
                       {finance && p.status !== "paid" && (
                         <form action={updatePayout} className="flex items-center gap-1.5">
@@ -124,7 +124,7 @@ export async function MoneyTab({ agency, ws }: { agency: OrgAccess; ws: Campaign
                 <span className="w-32 font-semibold tabular-nums">{i.number}</span>
                 <span className="min-w-0 flex-1 text-ink-2">{i.label ?? "Invoice"} · issued {shortDate(i.issued)}{i.due ? ` · due ${shortDate(i.due)}` : ""}</span>
                 <span className="tabular-nums">{inr(i.amount)} <span className="text-[12px] text-mute">+ {inr(i.gst)} GST</span></span>
-                <span className={clsx("inline-flex h-6 items-center rounded-full px-2 text-[12px] font-semibold capitalize", INV_TONE[i.status])}>{i.status}</span>
+                <span className={clsx("inline-flex h-6 items-center rounded-[6px] px-2 text-[12px] font-semibold capitalize", INV_TONE[i.status])}>{i.status}</span>
                 {finance && i.status !== "paid" && i.status !== "void" && (
                   <span className="flex gap-1">
                     {(i.status === "draft" ? ["sent", "void"] : ["paid", "void"]).map((st) => (

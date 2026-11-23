@@ -11,11 +11,11 @@ export function ChoiceCard({ href, kicker, title, desc, perks, cta, preview, fea
     <Link
       href={href}
       className={clsx(
-        "group relative flex h-full flex-col overflow-hidden rounded-[36px] border p-3 transition-[transform,box-shadow,border-color] duration-500 ease-out-expo hover:-translate-y-1.5",
+        "group relative flex h-full flex-col overflow-hidden rounded-[24px] border p-3 transition-[transform,box-shadow,border-color] duration-500 ease-out-expo hover:-translate-y-1.5",
         featured ? "border-cobalt-600 bg-cobalt text-white shadow-glow hover:shadow-[0_30px_60px_-20px_rgb(43_75_255/.6)]" : "border-line bg-surface text-ink shadow-sm hover:border-line-2 hover:shadow-lg",
       )}
     >
-      <div aria-hidden className={clsx("relative grid aspect-[16/11] place-items-center overflow-hidden rounded-[28px] p-5", featured ? "bg-cobalt-700/50" : "bg-canvas-2")}>
+      <div aria-hidden className={clsx("relative grid aspect-[16/11] place-items-center overflow-hidden rounded-[20px] p-5", featured ? "bg-cobalt-700/50" : "bg-canvas-2")}>
         <div className="transition-transform duration-700 ease-out-expo group-hover:-translate-y-1 group-hover:scale-[1.02]">{preview}</div>
       </div>
       <div className="flex flex-1 flex-col px-4 pb-4 pt-6 sm:px-5">

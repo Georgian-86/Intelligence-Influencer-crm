@@ -62,14 +62,14 @@ export function Metric({ label, value, delta, hint, spark, icon, tone = "default
 }) {
   const night = tone === "night", cobalt = tone === "cobalt";
   return (
-    <div className={clsx("relative overflow-hidden rounded-[20px] border p-4 sm:p-5",
+    <div className={clsx("relative overflow-hidden rounded-[14px] border p-4",
       night ? "border-white/10 bg-night text-white" : cobalt ? "border-cobalt-600 bg-cobalt text-white" : "border-line bg-surface shadow-sm", className)}>
       <div className="flex items-center justify-between gap-2">
         <span className={clsx("text-[13px] font-medium", night || cobalt ? "text-white/70" : "text-mute")}>{label}</span>
         {icon && <span className={clsx("grid h-8 w-8 place-items-center rounded-full", night || cobalt ? "bg-white/10" : "bg-canvas")}>{icon}</span>}
       </div>
       <div className="mt-2 flex items-end gap-2">
-        <span className="font-display text-[30px] font-bold leading-none tracking-[-0.035em] tabular-nums">{value}</span>
+        <span className="font-display text-[26px] font-semibold leading-none tracking-[-0.025em] tabular-nums">{value}</span>
         {delta != null && <Delta value={delta} onDark={night || cobalt} />}
       </div>
       {hint && <div className={clsx("mt-1.5 text-[12px]", night || cobalt ? "text-white/60" : "text-mute")}>{hint}</div>}
@@ -160,10 +160,10 @@ export const inr = (n?: number | null) => (n == null ? "—" : `₹${n.toLocaleS
 /* ---------- Segmented tabs (link-based, server-safe) ---------- */
 export function Segmented({ items, active }: { items: { href: string; label: string; count?: number }[]; active: string }) {
   return (
-    <nav className="inline-flex rounded-full border border-line bg-canvas-2/70 p-1" aria-label="Views">
+    <nav className="inline-flex rounded-[10px] border border-line bg-canvas-2/70 p-0.5" aria-label="Views">
       {items.map((i) => (
         <a key={i.href} href={i.href} aria-current={i.href === active ? "page" : undefined}
-          className={clsx("inline-flex h-8 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-medium transition-colors",
+          className={clsx("inline-flex h-8 items-center gap-1.5 rounded-[8px] px-3 text-[13px] font-medium transition-colors",
             i.href === active ? "bg-surface text-ink shadow-sm" : "text-mute hover:text-ink")}>
           {i.label}{i.count != null && <span className="tabular-nums text-faint">{i.count}</span>}
         </a>
@@ -175,11 +175,56 @@ export function Segmented({ items, active }: { items: { href: string; label: str
 /* ---------- Empty state ---------- */
 export function EmptyState({ title, body, action, icon }: { title: string; body?: ReactNode; action?: ReactNode; icon?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-[20px] border border-dashed border-line-2 bg-surface/60 px-6 py-12 text-center">
-      <div className="grid h-12 w-12 place-items-center rounded-full bg-cobalt-50 text-cobalt">{icon ?? <span className="text-xl">✦</span>}</div>
-      <div className="font-display text-[17px] font-semibold">{title}</div>
+    <div className="flex flex-col items-center gap-2.5 rounded-[14px] border border-dashed border-line-2 bg-surface/60 px-6 py-10 text-center">
+      {icon && <div className="grid h-10 w-10 place-items-center rounded-full bg-canvas-2 text-ink-2">{icon}</div>}
+      <div className="font-display text-[16px] font-semibold">{title}</div>
       {body && <p className="max-w-sm text-[14px] text-mute">{body}</p>}
       {action}
+    </div>
+  );
+}
+
+/* ---------- Page intro: one consistent header for every workspace page ---------- */
+export function PageIntro({ eyebrow, title, sub, actions, className }: { eyebrow?: ReactNode; title: ReactNode; sub?: ReactNode; actions?: ReactNode; className?: string }) {
+  return (
+    <header className={clsx("flex flex-wrap items-end justify-between gap-x-6 gap-y-4", className)}>
+      <div className="min-w-0 max-w-2xl">
+        {eyebrow && <p className="text-[13px] text-mute">{eyebrow}</p>}
+        <h1 className="mt-1 text-[24px] leading-tight sm:text-[26px]">{title}</h1>
+        {sub && <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-2">{sub}</p>}
+      </div>
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+    </header>
+  );
+}
+
+/* ---------- Section title row (outside cards) ---------- */
+export function SectionTitle({ title, sub, action, id }: { title: ReactNode; sub?: ReactNode; action?: ReactNode; id?: string }) {
+  return (
+    <div className="mb-3 flex items-end justify-between gap-4">
+      <div>
+        <h2 id={id} className="text-[16px] leading-tight">{title}</h2>
+        {sub && <p className="mt-0.5 text-[13px] text-mute">{sub}</p>}
+      </div>
+      {action}
+    </div>
+  );
+}
+
+/* ---------- Stat strip: a row of key numbers in one hairline card (replaces 4 floating tiles) ---------- */
+export function StatStrip({ items, className }: { items: { label: ReactNode; value: ReactNode; delta?: number | null; hint?: ReactNode; tone?: "default" | "bad" | "warn" | "ok" }[]; className?: string }) {
+  return (
+    <div className={clsx("grid grid-cols-2 overflow-hidden rounded-[14px] border border-line bg-surface shadow-sm sm:grid-cols-[repeat(auto-fit,minmax(150px,1fr))]", className)}>
+      {items.map((it, i) => (
+        <div key={i} className="border-line px-4 py-3.5 [&:not(:last-child)]:border-r max-sm:[&:nth-child(2n)]:border-r-0 max-sm:[&:nth-child(n+3)]:border-t sm:px-5 sm:py-4">
+          <div className="text-[12.5px] text-mute">{it.label}</div>
+          <div className="mt-1 flex items-baseline gap-2">
+            <span className={clsx("text-[22px] font-semibold leading-none tracking-[-0.02em] tabular-nums", it.tone === "bad" ? "text-bad" : it.tone === "warn" ? "text-warn" : it.tone === "ok" ? "text-ok" : "text-ink")}>{it.value}</span>
+            {it.delta != null && <Delta value={it.delta} />}
+          </div>
+          {it.hint && <div className="mt-1 truncate text-[12px] text-mute">{it.hint}</div>}
+        </div>
+      ))}
     </div>
   );
 }

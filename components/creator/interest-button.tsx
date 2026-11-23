@@ -28,13 +28,13 @@ export function InterestButton({ briefId, applied, size = "md", className, block
     <div className={clsx("relative", block && "w-full", className)}>
       {optimistic ? (
         <motion.span initial={reduce ? false : { scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 500, damping: 28 }}
-          className={clsx("inline-flex items-center justify-center gap-2 rounded-full bg-ok-bg font-semibold text-ok", size === "lg" ? "h-13 px-6 text-[15px]" : "h-11 px-4 text-[14px]", block && "w-full")}>
+          className={clsx("inline-flex items-center justify-center gap-2 rounded-[10px] bg-ok-bg font-semibold text-ok", size === "lg" ? "h-11 px-5 text-[14px]" : "h-[38px] px-3.5 text-[13.5px]", block && "w-full")}>
           {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" strokeWidth={2.6} />}
           {pending ? "Sending" : "Interested"}
         </motion.span>
       ) : (
-        <button type="button" onClick={click} className={clsx("btn-primary", size === "lg" && "btn-lg", block && "w-full")}>
-          <Hand className="h-4 w-4" /> I&apos;m interested
+        <button type="button" onClick={click} className={clsx(size === "lg" ? "btn-primary btn-lg" : "btn-ghost", block && "w-full")}>
+          I&apos;m interested
         </button>
       )}
       <span aria-live="polite" className="sr-only">{toast ?? ""}</span>

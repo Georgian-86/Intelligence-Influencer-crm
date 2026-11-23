@@ -1,7 +1,7 @@
 /** Number formatting + tick helpers shared by server and client chart code. */
 export type Fmt = "km" | "inr" | "inr2" | "inrc" | "compact" | "pct" | "num" | "x";
 
-export const SERIES = { a: "#2B4BFF", b: "#E5482A", grid: "#ECEAE3", axis: "#5B6178", track: "#EDEBE4" } as const;
+export const SERIES = { a: "#2B4BFF", b: "#8EA2FF", grid: "#ECEEF2", axis: "#596075", track: "#EEF0F4" } as const;
 
 export function fmt(kind: Fmt, v: number): string {
   switch (kind) {

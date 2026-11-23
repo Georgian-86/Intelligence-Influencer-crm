@@ -15,7 +15,7 @@ export default async function Brands({ searchParams }: { searchParams: Promise<{
   return (
     <>
       <div className="mb-8">
-        <h1 className="text-[28px] font-bold leading-tight tracking-[-0.035em] sm:text-[36px]">Brands</h1>
+        <h1 className="text-[24px] leading-tight sm:text-[26px]">Brands</h1>
         <p className="mt-2 max-w-2xl text-[15px] text-mute">Brand workspaces and the people who sign in to the brand portal. They only ever see campaigns linked to their workspace, never creator contact details.</p>
       </div>
       <ActionNotice sp={sp} />

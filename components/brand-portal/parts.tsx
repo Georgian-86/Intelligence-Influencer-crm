@@ -30,11 +30,11 @@ export function PhaseRail({ phase, className }: { phase: Phase; className?: stri
 
 export function PageTitle({ title, subtitle, actions, eyebrow }: { title: React.ReactNode; subtitle?: React.ReactNode; actions?: React.ReactNode; eyebrow?: React.ReactNode }) {
   return (
-    <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
-        {eyebrow && <div className="mb-2 text-[13px] font-medium text-mute">{eyebrow}</div>}
-        <h1 className="text-[28px] font-bold leading-[1.1] tracking-[-0.035em] sm:text-[36px]">{title}</h1>
-        {subtitle && <p className="mt-2 max-w-2xl text-[15px] text-mute">{subtitle}</p>}
+        {eyebrow && <div className="mb-1 text-[13px] text-mute">{eyebrow}</div>}
+        <h1 className="text-[24px] leading-tight sm:text-[26px]">{title}</h1>
+        {subtitle && <p className="mt-1.5 max-w-2xl text-[14.5px] text-ink-2">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>

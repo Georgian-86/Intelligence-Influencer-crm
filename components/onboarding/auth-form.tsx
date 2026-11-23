@@ -63,30 +63,25 @@ export function AuthForm({ mode, next, type, demo }: { mode: Mode; next: string;
     <div className="relative">
       <AnimatePresence mode="wait" initial={false}>
         {view === "choose" && (
-          <motion.div key="choose" {...anim} className="space-y-3">
+          <motion.div key="choose" {...anim} className="space-y-2.5">
             <form action={signInWithGoogle} onSubmit={() => setGooglePending(true)}>
               <input type="hidden" name="next" value={next} />
-              <button className="btn-primary btn-lg w-full justify-start gap-3 pl-2 pr-6 text-[15.5px]" aria-busy={googlePending}>
-                <span className="grid h-9 w-9 place-items-center rounded-full bg-white">
-                  {googlePending ? <LoaderCircle className="h-4 w-4 animate-spin text-cobalt" /> : <GoogleIcon className="h-[18px] w-[18px]" />}
-                </span>
-                <span className="flex-1 text-center">Continue with Google</span>
+              <button className="btn-ghost btn-lg w-full gap-2.5" aria-busy={googlePending}>
+                {googlePending ? <LoaderCircle className="h-[18px] w-[18px] animate-spin text-cobalt" /> : <GoogleIcon className="h-[18px] w-[18px]" />}
+                Continue with Google
               </button>
             </form>
-            <button type="button" onClick={() => go("phone")} className="btn-ghost btn-lg w-full justify-start gap-3 pl-2 pr-6 text-[15.5px]">
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-[#e7f8ee] text-[#128c4a]"><WhatsAppIcon className="h-[18px] w-[18px]" /></span>
-              <span className="flex-1 text-center">Continue with phone</span>
+            <button type="button" onClick={() => go("phone")} className="btn-ghost btn-lg w-full gap-2.5">
+              <WhatsAppIcon className="h-[18px] w-[18px] text-[#128c4a]" />
+              Continue with WhatsApp
             </button>
-            <p className="pt-1 text-center text-[13px] text-mute">
-              We&apos;ll send a code on WhatsApp.
-              <span className="mx-1.5 text-faint" aria-hidden>|</span>
-              <button type="button" onClick={() => go("email")} className="inline-flex min-h-11 items-center font-semibold text-cobalt underline-offset-4 hover:underline">
-                Use email instead
-              </button>
-            </p>
+            <div className="flex items-center gap-3 py-1.5 text-[12px] text-faint" aria-hidden><span className="h-px flex-1 bg-line" />or<span className="h-px flex-1 bg-line" /></div>
+            <button type="button" onClick={() => go("email")} className="btn-ghost btn-lg w-full gap-2.5">
+              <Mail className="h-[18px] w-[18px] text-mute" /> Continue with email
+            </button>
             {mode === "login" && (
-              <p className="text-center text-[13px] text-mute">
-                <button type="button" onClick={() => go("password")} className="inline-flex min-h-11 items-center gap-1.5 font-medium text-ink-2 underline-offset-4 hover:underline">
+              <p className="pt-2 text-center text-[13px] text-mute">
+                <button type="button" onClick={() => go("password")} className="inline-flex min-h-10 items-center gap-1.5 text-ink-2 underline-offset-4 hover:text-ink hover:underline">
                   <KeyRound className="h-3.5 w-3.5" /> Sign in with a password
                 </button>
               </p>
@@ -99,7 +94,7 @@ export function AuthForm({ mode, next, type, demo }: { mode: Mode; next: string;
             <BackLink onClick={() => go("choose")} />
             <div>
               <label htmlFor="phone" className="label">Mobile number</label>
-              <div className={clsx("flex h-13 items-center overflow-hidden rounded-[14px] border bg-surface shadow-xs transition-[border-color,box-shadow] focus-within:border-cobalt focus-within:ring-4 focus-within:ring-cobalt/12", error ? "border-bad" : "border-line")}>
+              <div className={clsx("flex h-12 items-center overflow-hidden rounded-[10px] border bg-surface transition-[border-color,box-shadow] focus-within:border-cobalt focus-within:ring-4 focus-within:ring-cobalt/12", error ? "border-bad" : "border-line")}>
                 <span className="flex h-full items-center border-r border-line bg-canvas px-3.5 text-[15px] font-semibold text-ink-2">+91</span>
                 <input id="phone" autoFocus inputMode="numeric" autoComplete="tel-national" placeholder="98765 43210" value={phone}
                   onChange={(e) => { setPhone(e.target.value.replace(/[^\d ]/g, "").slice(0, 12)); setError(null); }}
@@ -143,7 +138,7 @@ export function AuthForm({ mode, next, type, demo }: { mode: Mode; next: string;
               <label htmlFor="email" className="label">Email</label>
               <input id="email" type="email" autoFocus autoComplete="email" inputMode="email" placeholder="you@college.edu" value={email}
                 onChange={(e) => { setEmail(e.target.value); setError(null); }} aria-invalid={!!error} aria-describedby={error ? "auth-err" : "email-hint"}
-                className={clsx("input h-13 text-[16px]", error && "border-bad")} />
+                className={clsx("input h-12 text-[16px]", error && "border-bad")} />
               <p id="email-hint" className="mt-1.5 text-[12.5px] text-mute">Use your college email and we&apos;ll recognise your campus.</p>
             </div>
             <ErrorLine error={error} />
@@ -154,9 +149,9 @@ export function AuthForm({ mode, next, type, demo }: { mode: Mode; next: string;
         )}
 
         {view === "email-sent" && (
-          <motion.div key="sent" {...anim} className="rounded-[20px] border border-line bg-surface p-5 text-center shadow-sm" role="status">
+          <motion.div key="sent" {...anim} className="rounded-[14px] border border-line bg-surface p-5 text-center" role="status">
             <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-ok-bg text-ok"><MailCheck className="h-6 w-6" /></span>
-            <p className="mt-3 font-display text-[18px] font-semibold">Check {email}</p>
+            <p className="mt-3 text-[17px] font-semibold">Check {email}</p>
             <p className="mt-1 text-[14px] text-mute">Tap the link in the email to continue. It works for 1 hour.</p>
             <button type="button" onClick={() => go("email")} className="btn-quiet mt-3">Use a different email</button>
           </motion.div>
@@ -168,7 +163,7 @@ export function AuthForm({ mode, next, type, demo }: { mode: Mode; next: string;
             <input type="hidden" name="next" value={next} />
             <div><label htmlFor="pw-email" className="label">Email</label><input id="pw-email" name="email" type="email" required autoComplete="email" className="input h-12" /></div>
             <div><label htmlFor="pw" className="label">Password</label><input id="pw" name="password" type="password" required autoComplete="current-password" className="input h-12" /></div>
-            <button className="btn-dark btn-lg w-full">Sign in</button>
+            <button className="btn-primary btn-lg w-full">Sign in</button>
           </motion.form>
         )}
       </AnimatePresence>
@@ -184,7 +179,7 @@ export function AuthForm({ mode, next, type, demo }: { mode: Mode; next: string;
 
 function BackLink({ onClick, label = "All sign-in options" }: { onClick: () => void; label?: string }) {
   return (
-    <button type="button" onClick={onClick} className="-ml-2 inline-flex min-h-11 items-center gap-1.5 rounded-full px-2 text-[13px] font-medium text-mute hover:text-ink">
+    <button type="button" onClick={onClick} className="-ml-2 inline-flex min-h-10 items-center gap-1.5 rounded-[8px] px-2 text-[13px] font-medium text-mute hover:text-ink">
       <ArrowLeft className="h-4 w-4" /> {label}
     </button>
   );
@@ -192,5 +187,5 @@ function BackLink({ onClick, label = "All sign-in options" }: { onClick: () => v
 
 function ErrorLine({ error }: { error: string | null }) {
   if (!error) return null;
-  return <p id="auth-err" role="alert" className="-mt-1 rounded-[12px] bg-bad-bg px-3.5 py-2.5 text-[13.5px] font-medium text-bad">{error}</p>;
+  return <p id="auth-err" role="alert" className="-mt-1 rounded-[10px] bg-bad-bg px-3.5 py-2.5 text-[13.5px] text-bad">{error}</p>;
 }

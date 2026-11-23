@@ -31,12 +31,12 @@ export default async function Applications() {
     <>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-[34px] font-bold leading-tight tracking-[-0.04em] sm:text-[40px]">Applications</h1>
+          <h1 className="text-[24px] leading-tight sm:text-[26px]">Applications</h1>
           <p className="mt-1 text-[15px] text-mute">Every collab you&apos;ve raised your hand for, and exactly what happens next.</p>
         </div>
         <div className="flex gap-3">
-          <div className="rounded-[16px] border border-line bg-surface px-4 py-2.5 shadow-xs"><div className="text-[12px] text-mute">Paid</div><div className="font-display text-[20px] font-bold tabular-nums">₹{e.paid.toLocaleString("en-IN")}</div></div>
-          <div className="rounded-[16px] border border-line bg-surface px-4 py-2.5 shadow-xs"><div className="text-[12px] text-mute">On the way</div><div className="font-display text-[20px] font-bold tabular-nums text-ok">₹{e.pending.toLocaleString("en-IN")}</div></div>
+          <div className="rounded-[12px] border border-line bg-surface px-4 py-2.5 shadow-xs"><div className="text-[12px] text-mute">Paid</div><div className="font-display text-[20px] font-bold tabular-nums">₹{e.paid.toLocaleString("en-IN")}</div></div>
+          <div className="rounded-[12px] border border-line bg-surface px-4 py-2.5 shadow-xs"><div className="text-[12px] text-mute">On the way</div><div className="font-display text-[20px] font-bold tabular-nums text-ok">₹{e.pending.toLocaleString("en-IN")}</div></div>
         </div>
       </div>
 

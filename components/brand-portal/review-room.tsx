@@ -86,7 +86,7 @@ export function ReviewRoom({ items, reasons, brandName = "Brand", me = "You", li
             return (
               <li key={r.id} className="min-w-[240px] xl:min-w-0">
                 <button onClick={() => { setSel(r.id); setMode("idle"); }} aria-current={r.id === sel ? "true" : undefined}
-                  className={clsx("flex w-full items-center gap-3 rounded-[16px] border p-2.5 text-left transition-[border-color,background-color,box-shadow]",
+                  className={clsx("flex w-full items-center gap-3 rounded-[12px] border p-2.5 text-left transition-[border-color,background-color,box-shadow]",
                     r.id === sel ? "border-cobalt bg-surface shadow-sm" : "border-line bg-surface/70 hover:border-line-2")}>
                   <span className="relative h-14 w-11 shrink-0 overflow-hidden rounded-[10px]" style={{ background: `linear-gradient(160deg, hsl(${r.hue} 85% 76%), hsl(${(r.hue + 60) % 360} 65% 38%))` }} aria-hidden>
                     <Play className="absolute inset-0 m-auto h-4 w-4 fill-white text-white" />
@@ -116,7 +116,7 @@ export function ReviewRoom({ items, reasons, brandName = "Brand", me = "You", li
         {/* Preview */}
         <div className="min-w-0">
           <div className="relative mx-auto aspect-[9/16] w-full max-w-[340px] overflow-hidden rounded-[36px] bg-night p-2 shadow-lg">
-            <div className="relative h-full w-full overflow-hidden rounded-[28px]" style={{ background: `linear-gradient(165deg, hsl(${item.hue} 85% 74%), hsl(${(item.hue + 50) % 360} 70% 48%) 55%, hsl(${(item.hue + 90) % 360} 60% 22%))` }}>
+            <div className="relative h-full w-full overflow-hidden rounded-[14px]" style={{ background: `linear-gradient(165deg, hsl(${item.hue} 85% 74%), hsl(${(item.hue + 50) % 360} 70% 48%) 55%, hsl(${(item.hue + 90) % 360} 60% 22%))` }}>
               <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_30%_20%,rgb(255_255_255/.45),transparent)]" />
               {item.media?.kind === "video" && <video key={item.media.url} src={item.media.url} controls playsInline preload="metadata" className="absolute inset-0 z-20 h-full w-full bg-black object-contain" />}
               {/* eslint-disable-next-line @next/next/no-img-element */}

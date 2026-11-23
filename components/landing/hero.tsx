@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, CalendarCheck2, Star } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Avatar, AvatarStack, km } from "@/components/kit";
 import { Hero3D } from "@/components/three/hero-3d";
 import { HandleDemo, type DemoProfile } from "@/components/landing/handle-demo";
@@ -13,17 +13,16 @@ const PROFILES: DemoProfile[] = [
   })),
 ];
 
-const FLOATERS = CREATORS.filter((c) => c.status === "approved" && c.followers > 30_000).slice(0, 2);
+const FLOATERS = CREATORS.filter((c) => c.status === "approved" && c.followers > 30_000).slice(0, 1);
 
 export function Hero() {
-  const [a, b] = FLOATERS;
+  const [a] = FLOATERS;
   return (
-    <section className="grain relative isolate overflow-hidden pb-16 pt-28 sm:pt-32 lg:pb-24 lg:pt-36" aria-labelledby="hero-title">
+    <section className="relative isolate overflow-hidden pb-16 pt-28 sm:pt-32 lg:pb-20 lg:pt-36" aria-labelledby="hero-title">
       {/* atmosphere */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute right-[-10%] top-[-10%] h-[56rem] w-[56rem] rounded-full bg-[radial-gradient(closest-side,rgb(220_229_255/.95),rgb(220_229_255/0)_70%)]" />
-        <div className="absolute bottom-[-30%] left-[-15%] h-[40rem] w-[40rem] rounded-full bg-[radial-gradient(closest-side,rgb(195_181_255/.28),transparent_70%)]" />
-      </div>
+              </div>
 
       <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
         <Link href="/#how" className="group relative z-10 inline-flex h-9 items-center gap-2 rounded-full border border-line bg-surface/80 pl-2 pr-3.5 text-[13px] font-medium text-ink-2 shadow-xs backdrop-blur transition-colors hover:border-line-2">
@@ -35,7 +34,7 @@ export function Hero() {
           <ArrowRight className="h-3.5 w-3.5 text-mute transition-transform group-hover:translate-x-0.5" aria-hidden />
         </Link>
 
-        <h1 id="hero-title" className="relative z-10 mt-7 font-display text-[clamp(3.5rem,8.4vw,7.6rem)] font-bold leading-[0.92] tracking-[-0.05em] text-ink">
+        <h1 id="hero-title" className="relative z-10 mt-6 font-display text-[clamp(3rem,7vw,6rem)] font-bold leading-[0.95] tracking-[-0.05em] text-ink">
           Talent that{" "}
           <span className="font-serif text-[1.1em] font-normal italic tracking-[-0.025em] text-cobalt">launches</span>
           <br className="hidden sm:block" /> campaigns.
@@ -44,12 +43,12 @@ export function Hero() {
 
       <div className="mx-auto grid max-w-[1240px] gap-10 px-5 sm:px-8 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-0">
         <div className="relative z-10">
-          <p className="mt-7 max-w-[500px] text-pretty text-[17px] leading-[1.6] text-ink-2 sm:text-[18px]">
+          <p className="mt-6 max-w-[480px] text-pretty text-[17px] leading-[1.6] text-mute sm:text-[18px]">
             The campus-first creator network by Vigor Launchpad. Sign up with your Instagram handle —
             we fetch your followers, engagement and reach, so you never send a screenshot again.
           </p>
 
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link href="/register?type=influencer" className="btn-primary btn-lg group">
               Join as a creator <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden />
             </Link>
@@ -87,28 +86,10 @@ export function Hero() {
             </div>
           )}
 
-          {b && (
-            <div className="absolute right-[-2%] top-[58%] hidden animate-float md:block">
-              <TiltCard tilt="[transform:perspective(900px)_rotateY(-18deg)_rotateX(8deg)_rotateZ(3deg)]">
-                <div className="flex items-center gap-2 text-[12px] font-semibold text-ok"><CalendarCheck2 className="h-4 w-4" aria-hidden /> Confirmed for Campus Fest</div>
-                <div className="mt-2 flex items-center gap-2">
-                  <Avatar name={b.display_name} hue={b.hue} size={28} />
-                  <span className="text-[13px] font-semibold text-ink">{b.display_name}</span>
-                  <span className="ml-1 inline-flex items-center gap-0.5 text-[12px] text-ink-2"><Star className="h-3.5 w-3.5 fill-gold text-gold" aria-hidden />{b.rating}</span>
-                </div>
-              </TiltCard>
-            </div>
-          )}
-
           <div className="absolute bottom-0 left-1/2 w-[min(360px,92%)] -translate-x-1/2 sm:left-[4%] sm:translate-x-0">
             <HandleDemo profiles={PROFILES} />
           </div>
 
-          <div className="absolute left-[2%] top-[22%] hidden animate-float lg:block [animation-delay:-4s]">
-            <span className="glass inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[12.5px] font-semibold text-ink shadow-md">
-              <BadgeCheck className="h-4 w-4 text-cobalt" aria-hidden /> Verified insights
-            </span>
-          </div>
         </div>
       </div>
     </section>

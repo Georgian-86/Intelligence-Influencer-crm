@@ -49,7 +49,7 @@ export async function middleware(request: NextRequest) {
   );
   const { data } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
-  const protectedArea = ["/dashboard", "/crm", "/admin", "/brand", "/onboarding"].some((p) => path.startsWith(p));
+  const protectedArea = ["/dashboard", "/crm", "/admin", "/brand", "/onboarding"].some((p) => path === p || path.startsWith(p + "/"));
   if (protectedArea && !data.user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";

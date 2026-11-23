@@ -51,19 +51,28 @@ export function StaggerItem({ children, className }: { children: ReactNode; clas
   );
 }
 
-/** Animated number that counts up when scrolled into view. */
+/**
+ * Animated number that counts up when scrolled into view. Renders the real value on the server
+ * (no "0" flash for crawlers, no-JS or slow hydration); only numbers that start below the fold animate.
+ */
 export function CountUp({ to, decimals = 0, suffix = "", prefix = "", className }: {
   to: number; decimals?: number; suffix?: string; prefix?: string; className?: string;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true });
+  const inView = useInView(ref, { once: true, margin: "-40px" });
   const reduce = useReducedMotion();
-  const [val, setVal] = useState(reduce ? to : 0);
+  const [val, setVal] = useState(to);
+  const [armed, setArmed] = useState(false);
   useEffect(() => {
-    if (!inView || reduce) return;
+    if (reduce || !ref.current) return;
+    if (ref.current.getBoundingClientRect().top > window.innerHeight) { setVal(0); setArmed(true); }
+  }, [reduce]);
+  useEffect(() => {
+    if (!armed || !inView) return;
     const c = animate(0, to, { duration: 0.9, ease: EASE, onUpdate: (v) => setVal(v) });
     return () => c.stop();
-  }, [inView, reduce, to]);
+  }, [armed, inView, to]);
+  useEffect(() => { if (!armed) setVal(to); }, [to, armed]);
   const text = val.toLocaleString("en-IN", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
   return <span ref={ref} className={className}>{prefix}{text}{suffix}</span>;
 }

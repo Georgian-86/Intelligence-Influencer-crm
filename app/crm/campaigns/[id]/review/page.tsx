@@ -31,7 +31,7 @@ export default async function ReviewRoomPage({ params, searchParams }: { params:
       <header className="flex flex-wrap items-center gap-3">
         <BrandTile name={c.brand} hue={c.hue} size={40} />
         <div>
-          <h1 className="font-display text-[24px] font-semibold leading-tight tracking-[-0.035em]">Content review</h1>
+          <h1 className="text-[24px] leading-tight sm:text-[26px]">Content review</h1>
           <p className="text-[13px] text-mute">{c.brand} · {items.length} submissions · approvals are logged and shared with the brand when visible</p>
         </div>
       </header>

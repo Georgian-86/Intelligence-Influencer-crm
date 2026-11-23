@@ -8,7 +8,7 @@ import { CAMPAIGNS } from "@/lib/demo/fixtures";
 /** Section shell: consistent 8pt rhythm (py 96/128) and a left-aligned headline block. */
 export function Section({ id, children, className, labelledBy }: { id?: string; children: ReactNode; className?: string; labelledBy?: string }) {
   return (
-    <section id={id} aria-labelledby={labelledBy} className={clsx("scroll-mt-24 py-24 sm:py-32", className)}>
+    <section id={id} aria-labelledby={labelledBy} className={clsx("scroll-mt-24 py-20 sm:py-24", className)}>
       <div className="mx-auto max-w-[1240px] px-5 sm:px-8">{children}</div>
     </section>
   );
@@ -16,18 +16,19 @@ export function Section({ id, children, className, labelledBy }: { id?: string; 
 
 export function SectionHeading({ id, kicker, title, intro, action, className }: { id: string; kicker?: string; title: ReactNode; intro?: ReactNode; action?: ReactNode; className?: string }) {
   return (
-    <div className={clsx("mb-12 flex flex-col gap-6 sm:mb-16 lg:flex-row lg:items-end lg:justify-between", className)}>
+    <div className={clsx("mb-10 flex flex-col gap-6 sm:mb-12 lg:flex-row lg:items-end lg:justify-between", className)}>
       <div className="max-w-3xl">
-        {kicker && <p className="mb-4 flex items-center gap-2 text-[14px] font-medium text-cobalt"><span className="h-1.5 w-1.5 rounded-full bg-cobalt" aria-hidden />{kicker}</p>}
-        <h2 id={id} className="font-display text-[clamp(2.4rem,5.4vw,4.5rem)] font-bold leading-[0.98] tracking-[-0.045em] text-ink">{title}</h2>
-        {intro && <p className="mt-5 max-w-xl text-pretty text-[17px] leading-relaxed text-ink-2">{intro}</p>}
+        {kicker && <p className="mb-3 text-[14px] font-medium text-cobalt">{kicker}</p>}
+        <h2 id={id} className="text-balance font-display text-[clamp(2rem,4vw,3.25rem)] font-bold leading-[1.04] tracking-[-0.04em] text-ink">{title}</h2>
+        {intro && <p className="mt-4 max-w-xl text-pretty text-[17px] leading-relaxed text-mute">{intro}</p>}
       </div>
       {action}
     </div>
   );
 }
 
-export const Serif = ({ children }: { children: ReactNode }) => <em className="font-serif text-[1.06em] font-normal tracking-[-0.02em] text-cobalt">{children}</em>;
+/** Accent words in section headlines: brand colour only. The italic serif is reserved for the hero. */
+export const Serif = ({ children }: { children: ReactNode }) => <span className="text-cobalt">{children}</span>;
 
 /* ---------- case studies ---------- */
 const CASES = [
@@ -43,9 +44,9 @@ export function CaseStudies() {
         const k = CAMPAIGNS.find((x) => x.id === c.id)!;
         const dark = i === 0;
         return (
-          <figure key={c.id} className={clsx("flex flex-col rounded-[28px] border p-7 sm:p-8", dark ? "border-white/10 bg-night text-white" : "border-line bg-surface shadow-sm")}>
+          <figure key={c.id} className={clsx("flex flex-col rounded-[20px] border p-6 sm:p-7", dark ? "border-white/10 bg-night text-white" : "border-line bg-surface shadow-sm")}>
             <div className={clsx("font-display text-[15px] font-bold tracking-[-0.02em]", dark ? "text-white/80" : "text-ink-2")}>{k.brand_name} <span className={clsx("font-sans font-normal", dark ? "text-white/55" : "text-mute")}>· {k.name}</span></div>
-            <div className={clsx("mt-6 font-display text-[clamp(3rem,6vw,4.5rem)] font-bold leading-none tracking-[-0.05em] tabular-nums", dark ? "text-white" : "text-ink")}>
+            <div className={clsx("mt-5 font-display text-[clamp(2.5rem,4.5vw,3.5rem)] font-bold leading-none tracking-[-0.045em] tabular-nums", dark ? "text-white" : "text-ink")}>
               {compact(k.views)}<span className={clsx("ml-2 align-top font-sans text-[15px] font-medium tracking-normal", dark ? "text-mint" : "text-cobalt")}>views</span>
             </div>
             <dl className={clsx("mt-6 grid grid-cols-3 gap-3 border-y py-4", dark ? "border-white/10" : "border-line")}>
@@ -78,16 +79,16 @@ export const FAQS: { q: string; a: string }[] = [
 
 export function Faq({ items = FAQS }: { items?: { q: string; a: string }[] }) {
   return (
-    <div className="divide-y divide-line rounded-[28px] border border-line bg-surface shadow-sm">
+    <div className="divide-y divide-line rounded-[20px] border border-line bg-surface">
       {items.map((f) => (
         <details key={f.q} className="group px-6 sm:px-8 [&_summary::-webkit-details-marker]:hidden">
-          <summary className="flex min-h-[72px] cursor-pointer list-none items-center justify-between gap-6 py-5 text-left font-display text-[18px] font-semibold tracking-[-0.02em] text-ink sm:text-[20px]">
+          <summary className="flex min-h-[64px] cursor-pointer list-none items-center justify-between gap-6 py-4 text-left text-[16px] font-semibold text-ink sm:text-[17px]">
             {f.q}
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-line text-ink-2 transition-[transform,background-color,color] duration-300 ease-out-expo group-open:rotate-45 group-open:border-cobalt group-open:bg-cobalt group-open:text-white" aria-hidden>
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-mute transition-transform duration-300 ease-out-expo group-open:rotate-45 group-open:text-ink" aria-hidden>
               <Plus className="h-4 w-4" />
             </span>
           </summary>
-          <p className="-mt-1 max-w-2xl pb-6 text-[16px] leading-relaxed text-ink-2">{f.a}</p>
+          <p className="-mt-1 max-w-2xl pb-5 text-[15.5px] leading-relaxed text-ink-2">{f.a}</p>
         </details>
       ))}
     </div>
@@ -100,28 +101,39 @@ export function FinalCta() {
     <section aria-labelledby="cta-title" className="relative overflow-hidden bg-night text-white">
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="absolute -right-40 -top-40 h-[42rem] w-[42rem] rounded-full bg-[radial-gradient(closest-side,rgb(43_75_255/.55),transparent_70%)]" />
-        <div className="absolute -bottom-56 left-[-10%] h-[36rem] w-[36rem] rounded-full bg-[radial-gradient(closest-side,rgb(195_181_255/.25),transparent_70%)]" />
-        {/* launch trail */}
-        <svg viewBox="0 0 1200 500" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
-          <defs>
-            <linearGradient id="trail" x1="0" x2="1" y1="1" y2="0"><stop offset="0" stopColor="#FF6B4A" stopOpacity="0" /><stop offset=".55" stopColor="#FF6B4A" stopOpacity=".8" /><stop offset="1" stopColor="#C3B5FF" /></linearGradient>
-          </defs>
-          <path d="M-20 520 C 380 470, 720 360, 1010 90" fill="none" stroke="url(#trail)" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M-20 540 C 420 500, 760 400, 1040 130" fill="none" stroke="#8EA2FF" strokeOpacity=".25" strokeWidth="1" strokeDasharray="3 8" />
-        </svg>
-        <div className="absolute right-[14%] top-[14%] h-28 w-28 rounded-full bg-[radial-gradient(circle_at_32%_28%,#a9b8ff,#2b4bff_50%,#15226a)] shadow-[0_30px_60px_-20px_rgb(43_75_255/.8)] sm:h-40 sm:w-40" />
-        <div className="absolute right-[11%] top-[11%] h-36 w-52 rounded-[50%] border border-ice/40 [transform:rotate(-24deg)] sm:h-52 sm:w-72" />
-      </div>
-      <div className="relative mx-auto max-w-[1240px] px-5 py-24 sm:px-8 sm:py-32">
-        <h2 id="cta-title" className="max-w-4xl font-display text-[clamp(2.75rem,7vw,6rem)] font-bold leading-[0.95] tracking-[-0.05em]">
-          Your next campaign is <em className="font-serif font-normal text-cobalt-300">already</em> on campus.
+              </div>
+      <div className="relative mx-auto max-w-[1240px] px-5 py-20 sm:px-8 sm:py-24">
+        <h2 id="cta-title" className="max-w-3xl text-balance font-display text-[clamp(2.25rem,5vw,4rem)] font-bold leading-[1] tracking-[-0.045em]">
+          Your next campaign is <span className="text-cobalt-300">already</span> on campus.
         </h2>
-        <p className="mt-6 max-w-xl text-[18px] leading-relaxed text-white/75">Join free with your Instagram handle, or send a brief and get a shortlist in one working day.</p>
-        <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+        <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-white/70">Join free with your Instagram handle, or send a brief and get a shortlist in one working day.</p>
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <Link href="/join" className="btn-flame btn-lg group">Join free <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden /></Link>
           <Link href="/brands" className="btn btn-lg border border-white/25 text-white hover:border-white/50 hover:bg-white/5">Send a brief</Link>
         </div>
       </div>
     </section>
+  );
+}
+
+/* ---------- how it works: four plain steps ---------- */
+const HOW = [
+  { n: "01", title: "Brief in", body: "A brand shares goals, cities, talent mix and budget. Two minutes, from a phone." },
+  { n: "02", title: "Matched shortlist", body: "Creators are scored on niche, city, campus and engagement, then hand-checked by Vigor. The brand approves in one tap." },
+  { n: "03", title: "Brief, review, go live", body: "Talent gets the brief on WhatsApp. Drafts are reviewed with time-stamped comments and posts go live on schedule." },
+  { n: "04", title: "One report", body: "Reach, views, engagement and cost per view by city and campus, tracked automatically." },
+];
+
+export function HowItWorks() {
+  return (
+    <ol className="grid gap-px overflow-hidden rounded-[20px] border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+      {HOW.map((h) => (
+        <li key={h.n} className="bg-surface p-6 sm:p-7">
+          <span className="text-[13px] font-semibold tabular-nums text-cobalt">{h.n}</span>
+          <h3 className="mt-3 text-[18px] font-semibold tracking-[-0.02em] text-ink">{h.title}</h3>
+          <p className="mt-2 text-[15px] leading-relaxed text-mute">{h.body}</p>
+        </li>
+      ))}
+    </ol>
   );
 }

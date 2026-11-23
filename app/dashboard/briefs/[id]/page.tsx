@@ -29,16 +29,16 @@ export default async function BriefDetail({ params, searchParams }: { params: Pr
       <Link href="/dashboard/briefs" className="-ml-2 inline-flex min-h-11 items-center gap-1.5 rounded-full px-2 text-[14px] font-medium text-mute hover:text-ink"><ArrowLeft className="h-4 w-4" /> All briefs</Link>
 
       <header className="mt-3 flex flex-col gap-5 sm:flex-row sm:items-start">
-        <BrandTile name={b.brand} hue={b.hue} size={64} className="rounded-[20px]" />
+        <BrandTile name={b.brand} hue={b.hue} size={64} className="rounded-[14px]" />
         <div className="min-w-0 flex-1">
           <div className="text-[14px] font-medium text-mute">{b.brand}</div>
-          <h1 className="mt-1 font-display text-[32px] font-bold leading-[1.05] tracking-[-0.04em] sm:text-[42px]">{b.title}</h1>
+          <h1 className="mt-1 text-[24px] leading-tight sm:text-[26px]">{b.title}</h1>
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            {b.eligible ? <MatchBadge value={b.match} /> : <span className="inline-flex h-7 items-center rounded-full bg-canvas-2 px-2.5 text-[12.5px] font-semibold text-mute">Not a fit yet</span>}
+            {b.eligible ? <MatchBadge value={b.match} /> : <span className="inline-flex h-7 items-center rounded-[6px] bg-canvas-2 px-2.5 text-[12.5px] font-semibold text-mute">Not a fit yet</span>}
             {open ? <Deadline date={b.applyBy} label="to apply" /> : <span className="chip h-7">Closed</span>}
             {b.applied && <StageChip stage={b.applied} />}
-            <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-canvas-2 px-2.5 text-[12px] font-semibold text-ink-2"><MapPin className="h-3.5 w-3.5" />{b.cities.length ? b.cities.join(", ") : "Any city"}</span>
-            {b.slots && <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-canvas-2 px-2.5 text-[12px] font-semibold text-ink-2"><Users className="h-3.5 w-3.5" />{b.slots} spots</span>}
+            <span className="inline-flex h-7 items-center gap-1.5 rounded-[6px] bg-canvas-2 px-2.5 text-[12px] font-semibold text-ink-2"><MapPin className="h-3.5 w-3.5" />{b.cities.length ? b.cities.join(", ") : "Any city"}</span>
+            {b.slots && <span className="inline-flex h-7 items-center gap-1.5 rounded-[6px] bg-canvas-2 px-2.5 text-[12px] font-semibold text-ink-2"><Users className="h-3.5 w-3.5" />{b.slots} spots</span>}
           </div>
         </div>
       </header>
@@ -52,7 +52,7 @@ export default async function BriefDetail({ params, searchParams }: { params: Pr
             <h2 className="font-display text-[18px] font-semibold tracking-[-0.02em]">The brief</h2>
             <p className="mt-2 max-w-[68ch] whitespace-pre-line text-[15.5px] leading-relaxed text-ink-2">{b.description}</p>
             {b.reasons.length > 0 && b.eligible && (
-              <div className="mt-5 rounded-[16px] bg-cobalt-50 p-4">
+              <div className="mt-5 rounded-[12px] bg-cobalt-50 p-4">
                 <div className="text-[13px] font-semibold text-cobalt-700">Why you&apos;re a match</div>
                 <ul className="mt-2 flex flex-wrap gap-2">
                   {b.reasons.map((r) => <li key={r} className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[13px] font-medium text-ink"><Check className="h-3.5 w-3.5 text-cobalt" strokeWidth={2.6} />{r}</li>)}
@@ -112,7 +112,7 @@ export default async function BriefDetail({ params, searchParams }: { params: Pr
 
         {/* apply: sticky card on desktop, bar above the tab bar on mobile */}
         <aside className="lg:sticky lg:top-20 lg:self-start">
-          <div className="fixed inset-x-3 bottom-[84px] z-30 rounded-[22px] border border-line bg-surface/95 p-3 shadow-lg backdrop-blur-xl lg:static lg:rounded-[20px] lg:p-5 lg:shadow-sm">
+          <div className="fixed inset-x-3 bottom-[84px] z-30 rounded-[14px] border border-line bg-surface/95 p-3 shadow-lg backdrop-blur-xl lg:static lg:rounded-[14px] lg:p-5 lg:shadow-sm">
             <div className="flex items-center justify-between gap-3 lg:block">
               <div>
                 <div className="text-[12px] text-mute lg:text-[13px]">Payout</div>

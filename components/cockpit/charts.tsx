@@ -5,7 +5,8 @@
  * Follows the dataviz skill: thin marks (≤24px), 4px rounded data-ends square at the baseline,
  * 2px surface gaps between touching fills, hairline solid gridlines, text in ink tokens (never
  * series colour), a hover tooltip on every mark, and a table view for every chart.
- * Validated categorical pair (light surface): cobalt #2B4BFF + flame-600 #E5482A.
+ * Categorical pair (light surface): cobalt #2B4BFF + cobalt-300 #8EA2FF (one hue, two weights — calmer than
+ * cobalt + flame; series are also separated by position and legend, never by colour alone).
  */
 import { clsx } from "clsx";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
@@ -178,7 +179,7 @@ export function StackedColumns({ data, series, format = "inr", height = 220, tar
       <svg width={w} height={height} className="block overflow-visible">
         {forecastFrom != null && (
           <g>
-            <rect x={padL + band * forecastFrom} y={padT - 14} width={iw - band * forecastFrom + 4} height={ih + 14} fill="#F5F4EF" />
+            <rect x={padL + band * forecastFrom} y={padT - 14} width={iw - band * forecastFrom + 4} height={ih + 14} fill="#F3F4F7" />
             <text x={padL + band * forecastFrom + 6} y={padT - 4} fontSize="10.5" fontWeight="600" fill={SERIES.axis}>FORECAST</text>
           </g>
         )}
@@ -306,7 +307,7 @@ export function Bullet({ value, target, max, format = "compact", lowerIsBetter =
 /* ------------------------------------------------------------------ */
 /* Diverging heatmap — supply ÷ demand                                  */
 /* ------------------------------------------------------------------ */
-const DIV = { short3: "#B8341A", short2: "#E5482A", short1: "#F7B39F", even: "#E4E2DB", over1: "#B9C6FF", over2: "#5E78FF", over3: "#1F37D6" };
+const DIV = { short3: "#C2412A", short2: "#F19A84", short1: "#FBD9CF", even: "#EEF0F4", over1: "#DCE3FF", over2: "#B9C6FF", over3: "#5E78FF" };
 export function ratioColor(r: number) {
   if (r < 1.5) return DIV.short3;
   if (r < 2.5) return DIV.short2;
@@ -316,7 +317,7 @@ export function ratioColor(r: number) {
   if (r < 12) return DIV.over2;
   return DIV.over3;
 }
-const darkCell = (c: string) => [DIV.short3, DIV.short2, DIV.over2, DIV.over3].includes(c);
+const darkCell = (c: string) => [DIV.short3, DIV.over3].includes(c);
 
 export function GapHeatmap({ rows, cols, supply, demand }: { rows: string[]; cols: string[]; supply: number[][]; demand: number[][] }) {
   const [hover, setHover] = useState<[number, number] | null>(null);

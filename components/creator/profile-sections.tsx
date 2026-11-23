@@ -125,7 +125,7 @@ export function RatesSection({ init }: { init: { ratePerPost: number | null; rat
       view={
         <div className="grid grid-cols-2 gap-3">
           {[["Per Reel / post", fmt(v.ratePerPost)], ["Event, full day", fmt(v.rateFullDay)]].map(([k, val]) => (
-            <div key={k} className="rounded-[16px] bg-canvas p-4">
+            <div key={k} className="rounded-[12px] bg-canvas p-4">
               <div className="text-[12.5px] text-mute">{k}</div>
               <div className="mt-1 font-display text-[24px] font-bold tracking-[-0.03em] tabular-nums">{val ?? <span className="text-[15px] font-medium text-faint">Not set</span>}</div>
             </div>
@@ -181,7 +181,7 @@ export function ShareLink({ url }: { url: string }) {
     } catch {}
   };
   return (
-    <button type="button" onClick={share} className="btn-dark">
+    <button type="button" onClick={share} className="btn-primary">
       {copied ? <><Check className="h-4 w-4" /> Link copied</> : <><Share2 className="h-4 w-4 sm:hidden" /><Copy className="hidden h-4 w-4 sm:block" /> Share profile</>}
     </button>
   );

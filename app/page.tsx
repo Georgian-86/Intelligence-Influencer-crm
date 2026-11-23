@@ -7,9 +7,8 @@ import { Hero } from "@/components/landing/hero";
 import { TrustStrip } from "@/components/landing/trust-strip";
 import { AudienceSwitcher } from "@/components/landing/audience-switcher";
 import { CampusMap, type MapCity } from "@/components/landing/campus-map";
-import { LaunchStory } from "@/components/landing/launch-story";
 import { Bento } from "@/components/landing/bento";
-import { CaseStudies, Faq, FAQS, FinalCta, Section, SectionHeading, Serif } from "@/components/landing/sections";
+import { CaseStudies, Faq, FAQS, FinalCta, HowItWorks, Section, SectionHeading, Serif } from "@/components/landing/sections";
 import { JsonLd, faqPage } from "@/components/marketing/json-ld";
 import { CITY_INFO, cityStats, collegesIn, collegeSlug } from "@/components/marketing/seo-data";
 import { SITE } from "@/lib/site";
@@ -72,27 +71,27 @@ export default function Home() {
 
         <Section id="how" labelledBy="how-title">
           <SectionHeading id="how-title" kicker="How it works" title={<>How a campaign <Serif>launches</Serif>.</>}
-            intro="Seven steps from a brand's brief to a shareable report. Vigor's team runs every one of them with you." />
-          <LaunchStory />
+            intro="From a brand's brief to a shareable report. Vigor's team runs every step with you." />
+          <HowItWorks />
         </Section>
 
-        <Section id="features" labelledBy="feat-title" className="pt-8 sm:pt-12">
+        <Section id="features" labelledBy="feat-title" className="bg-canvas-2/60">
           <SectionHeading id="feat-title" kicker="Inside the platform" title={<>Less chasing. More <Serif>creating</Serif>.</>}
-            action={<Link href="/join" className="btn-dark btn-lg group self-start lg:self-auto">Create your profile <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden /></Link>} />
+            action={<Link href="/join" className="btn-ghost btn-lg group self-start lg:self-auto">Create your profile <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden /></Link>} />
           <Bento />
         </Section>
 
-        <Section id="results" labelledBy="results-title" className="bg-canvas-2/60">
+        <Section id="results" labelledBy="results-title">
           <SectionHeading id="results-title" kicker="Results" title={<>Numbers first. <Serif>Always.</Serif></>}
             intro="Recent campaigns run through the network, tracked post by post." />
           <CaseStudies />
         </Section>
 
-        <Section id="faq" labelledBy="faq-title">
+        <Section id="faq" labelledBy="faq-title" className="bg-canvas-2/60">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
             <div>
-              <h2 id="faq-title" className="font-display text-[clamp(2.4rem,5vw,4rem)] font-bold leading-[0.98] tracking-[-0.045em] text-ink">Questions, <Serif>answered</Serif>.</h2>
-              <p className="mt-5 max-w-sm text-[17px] leading-relaxed text-ink-2">Still unsure? Brands can <Link href="/brands" className="font-semibold text-cobalt underline-offset-4 hover:underline">send a brief</Link> and we&apos;ll reply within one working day.</p>
+              <h2 id="faq-title" className="font-display text-[clamp(2rem,4vw,3.25rem)] font-bold leading-[1.04] tracking-[-0.04em] text-ink">Questions, <Serif>answered</Serif>.</h2>
+              <p className="mt-4 max-w-sm text-[17px] leading-relaxed text-mute">Still unsure? Brands can <Link href="/brands" className="font-semibold text-cobalt underline-offset-4 hover:underline">send a brief</Link> and we&apos;ll reply within one working day.</p>
             </div>
             <Faq />
           </div>

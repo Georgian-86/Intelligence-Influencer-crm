@@ -87,7 +87,7 @@ export function AudienceSwitcher() {
         </div>
       </div>
 
-      <div role="tabpanel" id={`panel-${t.id}`} aria-labelledby={`tab-${t.id}`} className="mt-8 grid gap-8 rounded-[36px] border border-line bg-surface p-5 shadow-md sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-12 lg:p-12">
+      <div role="tabpanel" id={`panel-${t.id}`} aria-labelledby={`tab-${t.id}`} className="mt-8 grid gap-8 rounded-[24px] border border-line bg-surface p-5 shadow-md sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-12 lg:p-12">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div key={t.id} initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={reduce ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.35, ease: EASE }} className="flex flex-col">
             <h3 className="font-display text-[clamp(2rem,3.6vw,3rem)] font-bold leading-[1.02] tracking-[-0.04em] text-ink">{t.title}</h3>
@@ -108,7 +108,7 @@ export function AudienceSwitcher() {
             </div>
           </motion.div>
         </AnimatePresence>
-        <div className="relative min-h-[380px] overflow-hidden rounded-[28px] bg-canvas-2 p-5 sm:p-8" aria-hidden>
+        <div className="relative min-h-[380px] overflow-hidden rounded-[20px] bg-canvas-2 p-5 sm:p-8" aria-hidden>
           <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-[radial-gradient(closest-side,rgb(43_75_255/.18),transparent)]" />
           <AnimatePresence mode="wait" initial={false}>
             <motion.div key={t.id} initial={reduce ? false : { opacity: 0, scale: 0.97, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={reduce ? undefined : { opacity: 0, scale: 0.98 }} transition={{ duration: 0.45, ease: EASE }} className="relative grid h-full place-items-center">
