@@ -24,3 +24,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
     </AppShell>
   );
 }
+
+/** Instagram fetches (Apify) take 10–30s; give server actions on these pages time to finish. */
+export const maxDuration = 60;

@@ -40,3 +40,6 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
     </AppShell>
   );
 }
+
+/** Instagram fetches (Apify) take 10–30s; give server actions on these pages time to finish. */
+export const maxDuration = 60;
