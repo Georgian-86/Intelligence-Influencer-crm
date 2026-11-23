@@ -32,7 +32,7 @@ export function SubmissionBox({ due, what, item }: { due: string | null; what: s
 
   if (done) {
     return (
-      <div role="status" className="flex items-center gap-3 rounded-[16px] bg-ok-bg p-4 text-[14px] text-ok">
+      <div role="status" className="flex items-center gap-3 rounded-[12px] bg-ok-bg p-4 text-[14px] text-ok">
         <CircleCheck className="h-5 w-5 shrink-0" />
         <span>{done}</span>
       </div>
@@ -41,7 +41,7 @@ export function SubmissionBox({ due, what, item }: { due: string | null; what: s
 
   if (status === "live") {
     return (
-      <div className="flex flex-wrap items-center gap-3 rounded-[16px] border border-line bg-surface p-4 text-[14px]">
+      <div className="flex flex-wrap items-center gap-3 rounded-[12px] border border-line bg-surface p-4 text-[14px]">
         <CircleCheck className="h-5 w-5 shrink-0 text-ok" />
         <span className="min-w-0 flex-1"><span className="font-semibold">{label}</span> is live.</span>
         {item?.liveUrl && <a href={item.liveUrl} target="_blank" rel="noreferrer" className="btn-ghost btn-sm"><ExternalLink className="h-3.5 w-3.5" /> View post</a>}
@@ -51,7 +51,7 @@ export function SubmissionBox({ due, what, item }: { due: string | null; what: s
 
   if (status === "draft_submitted") {
     return (
-      <div className="flex items-center gap-3 rounded-[16px] bg-cobalt-50 p-4 text-[14px] text-cobalt-800">
+      <div className="flex items-center gap-3 rounded-[12px] bg-cobalt-50 p-4 text-[14px] text-cobalt-800">
         <CircleCheck className="h-5 w-5 shrink-0" />
         <span><span className="font-semibold">{label}: v{item?.version ?? 1} is in review.</span> Vigor replies within 24h, here and on WhatsApp.</span>
       </div>
@@ -70,7 +70,7 @@ export function SubmissionBox({ due, what, item }: { due: string | null; what: s
       });
     };
     return (
-      <div className="rounded-[18px] border border-ok/30 bg-ok-bg/60 p-4">
+      <div className="rounded-[14px] border border-ok/30 bg-ok-bg/60 p-4">
         <div className="text-[14px] font-semibold text-ok">{label} is approved. Post it now.</div>
         <div className="text-[12.5px] text-ink-2">Use the approved version and caption, then paste the link here so we can track views.</div>
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -107,7 +107,7 @@ export function SubmissionBox({ due, what, item }: { due: string | null; what: s
   };
 
   return (
-    <div className="rounded-[18px] border border-dashed border-cobalt/40 bg-cobalt-50/40 p-4">
+    <div className="rounded-[14px] border border-dashed border-cobalt/40 bg-cobalt-50/40 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="text-[14px] font-semibold">{status === "changes_requested" ? `Upload v${(item?.version ?? 1) + 1}` : "Submit your draft"}</div>

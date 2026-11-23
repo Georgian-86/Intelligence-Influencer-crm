@@ -106,13 +106,13 @@ export function ReviewRoom({ items: initial, brand, now, initialId, me = "You", 
           <div className="pointer-events-none absolute inset-0 opacity-50" style={{ background: `radial-gradient(50% 60% at 50% 40%, hsl(${cur.hue} 80% 50% / .35), transparent)` }} aria-hidden />
           <AnimatePresence mode="wait">
             <motion.div key={`${sel}-${ver}`} initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
-              className="relative aspect-[9/16] h-full max-h-[520px] min-h-[320px] overflow-hidden rounded-[20px] shadow-lg"
+              className="relative aspect-[9/16] h-full max-h-[520px] min-h-[320px] overflow-hidden rounded-[14px] shadow-lg"
               style={{ background: `linear-gradient(165deg, hsl(${(cur.hue + ver * 18) % 360} 85% 74%), hsl(${(cur.hue + 50 + ver * 18) % 360} 70% 50%) 58%, hsl(${(cur.hue + 90) % 360} 60% 24%))` }}>
               <div className="absolute inset-0 bg-[radial-gradient(60%_40%_at_30%_22%,rgb(255_255_255/.4),transparent)]" />
               {v.url && v.media === "video" && <video key={v.url} src={v.url} controls playsInline preload="metadata" className="absolute inset-0 z-10 h-full w-full bg-black object-contain" />}
               {v.url && v.media === "image" && <img src={v.url} alt={`Draft v${v.v} from ${cur.name}`} className="absolute inset-0 z-10 h-full w-full bg-black object-contain" />}
               {v.url && v.media === "link" && (
-                <a href={v.url} target="_blank" rel="noreferrer" className="absolute inset-x-6 top-1/3 z-10 flex flex-col items-center gap-2 rounded-[16px] bg-black/45 px-4 py-4 text-center text-[13px] font-semibold backdrop-blur hover:bg-black/55">
+                <a href={v.url} target="_blank" rel="noreferrer" className="absolute inset-x-6 top-1/3 z-10 flex flex-col items-center gap-2 rounded-[12px] bg-black/45 px-4 py-4 text-center text-[13px] font-semibold backdrop-blur hover:bg-black/55">
                   <ExternalLink className="h-5 w-5" /> Open draft v{v.v}
                   <span className="max-w-full truncate text-[11px] font-normal text-white/70">{v.url.replace(/^https?:\/\//, "")}</span>
                 </a>
@@ -136,7 +136,7 @@ export function ReviewRoom({ items: initial, brand, now, initialId, me = "You", 
           <div className="mb-2 text-[12px] text-white/55">v{ver} uploaded {ago(v.at, now)} ago{!latest && " · older version"}</div>
           <ul className="flex flex-wrap gap-1.5" aria-label="Compliance checklist">
             {cur.checklist.map((c) => (
-              <li key={c.label} className={clsx("inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-medium", c.ok ? "bg-mint/15 text-mint" : "bg-flame/15 text-flame")}>
+              <li key={c.label} className={clsx("inline-flex h-7 items-center gap-1.5 rounded-[6px] px-2.5 text-[12px] font-medium", c.ok ? "bg-mint/15 text-mint" : "bg-flame/15 text-flame")}>
                 {c.ok ? <Check className="h-3.5 w-3.5" strokeWidth={2.6} /> : <X className="h-3.5 w-3.5" strokeWidth={2.6} />}{c.label}
               </li>
             ))}

@@ -42,13 +42,13 @@ export function EnquiryBoard({ items: init, now, canConvert }: { items: EnquiryV
         {COLS.map((col) => {
           const list = items.filter((e) => e.status === col.key);
           return (
-            <section key={col.key} aria-label={`${col.label} (${list.length})`} className="rounded-[20px] border border-line bg-canvas-2/50 p-2">
+            <section key={col.key} aria-label={`${col.label} (${list.length})`} className="rounded-[14px] border border-line bg-canvas-2/50 p-2">
               <header className="flex items-center gap-2 px-2 pb-2 pt-1.5">
                 <span className={clsx("h-2 w-2 rounded-full", col.dot)} /><h2 className="text-[13.5px] font-semibold">{col.label}</h2><span className="text-[12px] font-semibold tabular-nums text-mute">{list.length}</span>
               </header>
               <ul className="space-y-2">
                 {list.map((e) => (
-                  <motion.li key={e.id} layoutId={reduce ? undefined : e.id} layout={!reduce} transition={{ type: "spring", stiffness: 500, damping: 40 }} className="rounded-[16px] border border-line bg-surface p-4 shadow-xs">
+                  <motion.li key={e.id} layoutId={reduce ? undefined : e.id} layout={!reduce} transition={{ type: "spring", stiffness: 500, damping: 40 }} className="rounded-[12px] border border-line bg-surface p-4 shadow-xs">
                     <div className="flex items-start gap-3">
                       <BrandTile name={e.company} hue={hue(e.company)} size={36} />
                       <div className="min-w-0 flex-1">
@@ -70,7 +70,7 @@ export function EnquiryBoard({ items: init, now, canConvert }: { items: EnquiryV
                     </div>
                   </motion.li>
                 ))}
-                {list.length === 0 && <li className="rounded-[16px] border border-dashed border-line-2 px-4 py-8 text-center text-[12.5px] text-faint">Nothing here</li>}
+                {list.length === 0 && <li className="rounded-[12px] border border-dashed border-line-2 px-4 py-8 text-center text-[12.5px] text-faint">Nothing here</li>}
               </ul>
             </section>
           );

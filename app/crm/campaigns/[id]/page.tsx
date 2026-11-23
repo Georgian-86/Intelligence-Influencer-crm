@@ -43,7 +43,7 @@ export default async function CampaignWorkspace({ params, searchParams }: { para
         <BrandTile name={c.brand} hue={c.hue} size={52} />
         <div className="min-w-0 flex-1">
           <div className="text-[13px] font-medium text-mute">{c.brand}</div>
-          <h1 className="font-display text-[26px] font-semibold leading-tight tracking-[-0.035em] sm:text-[30px]">{c.name}</h1>
+          <h1 className="text-[24px] leading-tight sm:text-[26px]">{c.name}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px] text-mute">
             {c.status === "active" ? <HealthBadge health={c.health} /> : <span className="chip capitalize">{c.status}</span>}
             <span className="tabular-nums">{shortDate(c.start)} → {shortDate(c.end)}{left != null && left >= 0 && c.status !== "completed" ? ` · ${left} days left` : ""}</span>
@@ -171,7 +171,7 @@ function DeliverableEdit({ d, back }: { d: DeliverableRow; back: string }) {
   return (
     <details className="relative inline-block text-left">
       <summary className="cursor-pointer list-none text-[12.5px] font-semibold text-mute hover:text-ink">Edit</summary>
-      <form action={updateDeliverable} className="absolute right-0 z-20 mt-2 grid w-72 gap-2.5 rounded-[16px] border border-line bg-surface p-4 shadow-lg">
+      <form action={updateDeliverable} className="absolute right-0 z-20 mt-2 grid w-72 gap-2.5 rounded-[12px] border border-line bg-surface p-4 shadow-lg">
         <input type="hidden" name="id" value={d.id} />
         <input type="hidden" name="back" value={back} />
         <label className="text-[12px] font-medium text-ink-2">Due date<input type="date" name="due_date" defaultValue={d.due ?? ""} className="input mt-1 h-9" /></label>

@@ -53,7 +53,7 @@ export default async function Cockpit() {
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="mb-2 text-[13px] font-medium text-mute">{weekLabel}</div>
-          <h1 className="text-[28px] font-bold leading-tight tracking-[-0.035em] sm:text-[36px]">Founder cockpit</h1>
+          <h1 className="text-[24px] leading-tight sm:text-[26px]">Founder cockpit</h1>
           <p className="mt-2 max-w-2xl text-[15px] text-mute">Money, delivery and capacity on one page. Red means someone needs a nudge today.</p>
         </div>
       </div>
@@ -64,7 +64,7 @@ export default async function Cockpit() {
         </p>
       )}
 
-      <section aria-label="Headline numbers" className="grid grid-cols-2 gap-px overflow-hidden rounded-[20px] border border-line bg-line shadow-sm md:grid-cols-3 xl:grid-cols-6">
+      <section aria-label="Headline numbers" className="grid grid-cols-2 gap-px overflow-hidden rounded-[14px] border border-line bg-line shadow-sm md:grid-cols-3 xl:grid-cols-6">
         {kpis.map((k) => (
           <div key={k.label} className="bg-surface p-5">
             <div className={clsx("flex items-center gap-1.5 text-[12.5px]", k.alert ? "font-semibold text-bad" : "text-mute")}>{k.alert && <TriangleAlert className="h-3.5 w-3.5" />}{k.label}</div>

@@ -142,7 +142,7 @@ export default async function BrandsPage({ searchParams }: { searchParams: Promi
             <h2 id="process-title" className="max-w-3xl font-display text-[clamp(2.4rem,5vw,4rem)] font-bold leading-[0.98] tracking-[-0.045em] text-ink">From brief to report in <Serif>four</Serif> steps.</h2>
             <ol className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
               {PROCESS.map((p, i) => (
-                <li key={p.title} className="relative rounded-[28px] border border-line bg-surface p-6 shadow-sm">
+                <li key={p.title} className="relative rounded-[20px] border border-line bg-surface p-6 shadow-sm">
                   <div className="flex items-center justify-between">
                     <span className="grid h-11 w-11 place-items-center rounded-full bg-ink text-white"><p.icon className="h-5 w-5" aria-hidden /></span>
                     <span className="font-display text-[14px] font-bold text-mute tabular-nums">0{i + 1}</span>
@@ -164,7 +164,7 @@ export default async function BrandsPage({ searchParams }: { searchParams: Promi
             </div>
             <div className="mt-14 grid gap-5 lg:grid-cols-3">
               {MODELS.map((m) => (
-                <article key={m.name} className={`flex flex-col rounded-[28px] border p-7 sm:p-8 ${m.featured ? "border-white/10 bg-night text-white shadow-lg" : "border-line bg-surface shadow-sm"}`}>
+                <article key={m.name} className={`flex flex-col rounded-[20px] border p-7 sm:p-8 ${m.featured ? "border-white/10 bg-night text-white shadow-lg" : "border-line bg-surface shadow-sm"}`}>
                   <div className="flex items-center justify-between">
                     <h3 className="font-display text-[26px] font-bold tracking-[-0.03em]">{m.name}</h3>
                     {m.featured && <span className="chip border-flame bg-flame text-night">Most booked</span>}

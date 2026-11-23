@@ -8,7 +8,7 @@ import { ME } from "@/lib/demo/fixtures";
 function Tile({ title, body, className, children, tone = "light" }: { title: string; body: string; className?: string; children: ReactNode; tone?: "light" | "night" | "cobalt" }) {
   const dark = tone !== "light";
   return (
-    <article className={clsx("group relative flex flex-col overflow-hidden rounded-[28px] border p-6 transition-[transform,box-shadow] duration-500 ease-out-expo hover:-translate-y-1 sm:p-7",
+    <article className={clsx("group relative flex flex-col overflow-hidden rounded-[20px] border p-6 transition-[transform,box-shadow] duration-500 ease-out-expo hover:-translate-y-1 sm:p-7",
       tone === "night" ? "border-white/10 bg-night text-white hover:shadow-lg" : tone === "cobalt" ? "border-cobalt-600 bg-cobalt text-white hover:shadow-glow" : "border-line bg-surface shadow-sm hover:shadow-md", className)}>
       <div aria-hidden className="relative flex-1">{children}</div>
       <h3 className={clsx("relative mt-6 font-display text-[22px] font-semibold leading-tight tracking-[-0.025em]", dark ? "text-white" : "text-ink")}>{title}</h3>

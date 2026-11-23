@@ -101,7 +101,7 @@ export default async function CityPage({ params }: Props) {
                 {featured.map((c) => <CreatorTile key={c.id} c={c} />)}
               </ul>
             ) : (
-              <div className="mt-10 rounded-[28px] border border-dashed border-line-2 bg-surface/60 p-10 text-center">
+              <div className="mt-10 rounded-[20px] border border-dashed border-line-2 bg-surface/60 p-10 text-center">
                 <p className="font-display text-[22px] font-semibold tracking-[-0.02em] text-ink">Be one of the first featured creators in {city.name}.</p>
                 <p className="mx-auto mt-2 max-w-md text-[15px] text-ink-2">Profiles go live here once our team verifies them — usually within 48 hours of sign-up.</p>
                 <Link href="/register?type=influencer" className="btn-primary mt-6">Join with your handle</Link>

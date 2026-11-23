@@ -103,7 +103,7 @@ export function HeaderBar({ loggedIn = false }: { loggedIn?: boolean }) {
         id="mobile-sheet"
         ref={sheetRef}
         hidden={!open}
-        className="glass mx-auto mt-2 max-w-[1240px] origin-top rounded-[28px] p-3 shadow-lg lg:hidden"
+        className="glass mx-auto mt-2 max-w-[1240px] origin-top rounded-[20px] p-3 shadow-lg lg:hidden"
       >
         <nav aria-label="Mobile" className="grid">
           {LINKS.map((l) => (

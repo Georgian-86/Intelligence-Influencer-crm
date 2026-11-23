@@ -25,7 +25,7 @@ export function CampusMap({ cities }: { cities: MapCity[] }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-10">
-      <div className="relative overflow-hidden rounded-[36px] bg-night p-4 text-white sm:p-6">
+      <div className="relative overflow-hidden rounded-[24px] bg-night p-4 text-white sm:p-6">
         <div aria-hidden className="absolute inset-0 bg-[radial-gradient(60%_50%_at_30%_30%,rgb(43_75_255/.35),transparent_70%)]" />
         <svg viewBox={`0 0 ${W} ${H}`} className="relative mx-auto block h-auto w-full max-w-[420px]" role="group" aria-label="Launch cities">
           <defs>
@@ -85,7 +85,7 @@ export function CampusMap({ cities }: { cities: MapCity[] }) {
           ))}
         </div>
 
-        <div className="mt-6 rounded-[28px] border border-line bg-surface p-5 shadow-sm sm:p-6" aria-live="polite">
+        <div className="mt-6 rounded-[20px] border border-line bg-surface p-5 shadow-sm sm:p-6" aria-live="polite">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h3 className="font-display text-[20px] font-semibold tracking-[-0.02em] text-ink">Campuses in {c.name}</h3>
             <Link href={`/creators/${c.slug}`} className="inline-flex items-center gap-1 text-[14px] font-semibold text-cobalt hover:underline">

@@ -285,7 +285,7 @@ export function TalentExplorer({ rows, briefs, initialQuery, savedViews, canExpo
       </div>
 
       {list.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-[20px] border border-dashed border-line-2 bg-surface/60 px-6 py-14 text-center">
+        <div className="flex flex-col items-center gap-3 rounded-[14px] border border-dashed border-line-2 bg-surface/60 px-6 py-14 text-center">
           <span className="grid h-12 w-12 place-items-center rounded-full bg-cobalt-50 text-cobalt"><SearchX className="h-5 w-5" /></span>
           <div className="font-display text-[17px] font-semibold">No creators match these filters</div>
           <p className="max-w-sm text-[14px] text-mute">Loosen the follower range or ER floor, or clear filters to see the whole pool.</p>
@@ -403,7 +403,7 @@ export function TalentExplorer({ rows, briefs, initialQuery, savedViews, canExpo
         {peekRow && (
           <motion.aside key="peek" initial={reduce ? { opacity: 0 } : { x: 24, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={reduce ? { opacity: 0 } : { x: 24, opacity: 0 }}
             transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }} aria-label={`${peekRow.name} quick view`}
-            className="fixed bottom-3 right-3 top-[68px] z-40 hidden w-[380px] flex-col overflow-hidden rounded-[22px] border border-line bg-surface shadow-lg md:flex">
+            className="fixed bottom-3 right-3 top-[68px] z-40 hidden w-[380px] flex-col overflow-hidden rounded-[14px] border border-line bg-surface shadow-lg md:flex">
             <QuickView r={peekRow} brief={brief} onClose={() => setPeek(null)} />
           </motion.aside>
         )}
@@ -413,7 +413,7 @@ export function TalentExplorer({ rows, briefs, initialQuery, savedViews, canExpo
       <AnimatePresence>
         {selected.size > 0 && (
           <motion.div initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 16, opacity: 0 }} transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className={clsx("fixed inset-x-3 bottom-24 z-40 mx-auto flex max-w-[680px] flex-wrap items-center gap-2 rounded-[20px] bg-night p-2 pl-4 text-white shadow-lg lg:bottom-6 lg:left-[256px]", peekRow && "md:right-[400px]")} role="region" aria-label="Bulk actions">
+            className={clsx("fixed inset-x-3 bottom-24 z-40 mx-auto flex max-w-[680px] flex-wrap items-center gap-2 rounded-[14px] bg-night p-2 pl-4 text-white shadow-lg lg:bottom-6 lg:left-[256px]", peekRow && "md:right-[400px]")} role="region" aria-label="Bulk actions">
             <span className="text-[13.5px] font-semibold tabular-nums">{selected.size} selected</span>
             <button onClick={() => setSelected(new Set())} className="text-[12.5px] text-white/60 hover:text-white">Clear</button>
             <div className="ml-auto flex flex-wrap items-center gap-2">

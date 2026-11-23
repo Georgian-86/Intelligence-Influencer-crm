@@ -45,54 +45,50 @@ export default async function BrandHome() {
         subtitle={<>{campaigns.length} campaign{campaigns.length === 1 ? "" : "s"} running. {decisions ? <><span className="font-medium text-ink">{decisions} decision{decisions === 1 ? " is" : "s are"}</span> waiting on you, and campaigns move faster once they&apos;re done.</> : "Nothing is waiting on you right now."}</>}
         actions={<>
           {am.whatsapp && <a href={`https://wa.me/${am.whatsapp}`} className="btn-ghost"><MessageCircle className="h-4 w-4" /> WhatsApp {first}</a>}
-          <Link href="/brand/new-brief" className="btn-dark"><Plus className="h-4 w-4" /> New brief</Link>
+          <Link href="/brand/new-brief" className="btn-primary"><Plus className="h-4 w-4" /> New brief</Link>
         </>}
       />
 
       {/* Waiting on you */}
-      <section aria-labelledby="waiting" className="mb-10">
-        <h2 id="waiting" className="mb-3 text-[18px] font-semibold">Waiting on you</h2>
+      <section aria-labelledby="waiting" className="mb-8">
+        <h2 id="waiting" className="mb-3 text-[16px]">Waiting on you</h2>
         <div className="grid gap-4 lg:grid-cols-2">
-          <Link href={`/brand/campaigns/${sc.id}/shortlist`} className="group relative overflow-hidden rounded-[28px] bg-night p-6 text-white shadow-lg sm:p-7">
-            <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-[radial-gradient(closest-side,rgb(255_107_74/.35),transparent)]" aria-hidden />
-            <div className="relative flex items-center gap-2 text-[13px] text-white/70"><UserRoundCheck className="h-4 w-4" /> Shortlist · {sc.name}</div>
-            <div className="relative mt-4 flex items-end gap-3">
-              <span className="font-display text-[56px] font-bold leading-none tracking-[-0.04em] tabular-nums"><CountUp to={shortlist.length} /></span>
-              <span className="mb-1.5 text-[16px] leading-snug text-white/85">creator{shortlist.length === 1 ? "" : "s"} to approve<br />{shortlist.length ? `you need ${target}` : "all caught up"}</span>
+          <Link href={`/brand/campaigns/${sc.id}/shortlist`} className="group card flex flex-col p-5 transition-colors hover:border-line-2">
+            <div className="flex items-center gap-2 text-[13px] text-mute"><UserRoundCheck className="h-4 w-4" /> Shortlist · {sc.name}</div>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-[32px] font-semibold leading-none tracking-[-0.02em] tabular-nums"><CountUp to={shortlist.length} /></span>
+              <span className="text-[14.5px] text-ink-2">creator{shortlist.length === 1 ? "" : "s"} to approve{shortlist.length ? ` · you need ${target}` : ""}</span>
             </div>
-            <div className="relative mt-5 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                {shortlist.length > 0 && <AvatarStack people={shortlist.map((c) => ({ name: c.name, hue: c.hue }))} max={5} size={30} />}
-                {brand.demo && <span className="flex items-center gap-1.5 text-[13px] text-white/75"><Clock className="h-3.5 w-3.5" /> Due tomorrow, 6 pm</span>}
-              </div>
-              <span className="btn-flame btn-lg group-hover:brightness-105">{shortlist.length ? "Review shortlist" : "See shortlist"} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
+            <p className="mt-2 text-[13px] text-mute">{shortlist.length ? <>Go-live on {shortDate(sc.go_live)} depends on this{brand.demo ? ", due tomorrow 6 pm" : ""}. About {Math.max(2, Math.round(shortlist.length / 2))} minutes.</> : "New creators appear here when Vigor shares them."}</p>
+            <div className="mt-auto flex items-center justify-between gap-3 pt-5">
+              {shortlist.length > 0 ? <AvatarStack people={shortlist.map((c) => ({ name: c.name, hue: c.hue }))} max={5} size={26} /> : <span />}
+              <span className="btn-primary">{shortlist.length ? "Review shortlist" : "See shortlist"} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
             </div>
-            <p className="relative mt-4 text-[12.5px] text-white/60">{shortlist.length ? <>Go-live on {shortDate(sc.go_live)} depends on this. Takes about {Math.max(2, Math.round(shortlist.length / 2))} minutes.</> : "New creators appear here when Vigor shares them."}</p>
           </Link>
 
-          <Link href={`/brand/campaigns/${rc.id}/review`} className="group card relative overflow-hidden p-6 transition-shadow hover:shadow-md sm:p-7">
+          <Link href={`/brand/campaigns/${rc.id}/review`} className="group card flex flex-col p-5 transition-colors hover:border-line-2">
             <div className="flex items-center gap-2 text-[13px] text-mute"><Clapperboard className="h-4 w-4" /> Content review · {rc.name}</div>
-            <div className="mt-4 flex items-end gap-3">
-              <span className="font-display text-[56px] font-bold leading-none tracking-[-0.04em] tabular-nums"><CountUp to={reviews.length} /></span>
-              <span className="mb-1.5 text-[16px] leading-snug text-ink-2">draft{reviews.length === 1 ? "" : "s"} to review<br />{reviews.length ? `${reviews.filter((r) => r.kind === "Reel").length} Reels, ${reviews.filter((r) => r.kind === "Story").length} Story` : "all caught up"}</span>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-[32px] font-semibold leading-none tracking-[-0.02em] tabular-nums"><CountUp to={reviews.length} /></span>
+              <span className="text-[14.5px] text-ink-2">draft{reviews.length === 1 ? "" : "s"} to review{reviews.length ? ` · ${reviews.filter((r) => r.kind === "Reel").length} Reels, ${reviews.filter((r) => r.kind === "Story").length} Story` : ""}</span>
             </div>
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+            <p className="mt-2 text-[13px] text-mute">Every draft has passed Vigor&apos;s QA for disclosure, audio rights and brand safety.</p>
+            <div className="mt-auto flex items-center justify-between gap-3 pt-5">
               {reviews.length > 0 ? (
-                <span className={clsx("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-medium", overSla ? "bg-bad-bg text-bad" : "bg-warn-bg text-warn")}>
-                  <Timer className="h-3.5 w-3.5" /> {overSla ? `${overSla} past the 24h review window` : `Oldest waiting ${Math.round(oldest)}h`}
+                <span className={clsx("inline-flex items-center gap-1.5 text-[13px] font-medium", overSla ? "text-bad" : "text-warn")}>
+                  <Timer className="h-3.5 w-3.5" /> {overSla ? `${overSla} past the 24h window` : `Oldest waiting ${Math.round(oldest)}h`}
                 </span>
               ) : <span />}
-              <span className="btn-primary btn-lg">Review content <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
+              <span className="btn-ghost">Review content <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
             </div>
-            <p className="mt-4 text-[12.5px] text-mute">Every draft has passed Vigor&apos;s QA for disclosure, audio rights and brand safety.</p>
           </Link>
         </div>
       </section>
 
       {/* Campaigns */}
-      <section aria-labelledby="campaigns" className="mb-10">
+      <section aria-labelledby="campaigns" className="mb-8">
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 id="campaigns" className="text-[18px] font-semibold">Active campaigns</h2>
+          <h2 id="campaigns" className="text-[16px]">Active campaigns</h2>
           <span className="hidden text-[13px] text-mute sm:inline">{brand.demo ? "Updated 12 min ago from Instagram" : "Numbers update as posts go live"}</span>
         </div>
         <div className="space-y-4">
@@ -102,8 +98,8 @@ export default async function BrandHome() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         {/* Timeline */}
-        <section aria-labelledby="timeline" className="card p-6">
-          <h2 id="timeline" className="mb-5 text-[18px] font-semibold">What happens next</h2>
+        <section aria-labelledby="timeline" className="card p-5">
+          <h2 id="timeline" className="mb-4 text-[16px]">What happens next</h2>
           <ol className="relative">
             {milestones.map((m, i) => (
               <li key={i} className="relative grid grid-cols-[64px_24px_1fr] gap-x-3 pb-5 last:pb-0">
@@ -111,7 +107,7 @@ export default async function BrandHome() {
                 <span className="relative flex justify-center">
                   {i < milestones.length - 1 && <span className={clsx("absolute top-5 bottom-[-20px] w-px", m.state === "done" ? "bg-cobalt" : "bg-line-2")} aria-hidden />}
                   <span className={clsx("relative mt-1 grid h-3.5 w-3.5 place-items-center rounded-full",
-                    m.state === "done" ? "bg-cobalt" : m.state === "next" ? "bg-flame ring-4 ring-flame-100" : "border-2 border-line-2 bg-surface")} aria-hidden />
+                    m.state === "done" ? "bg-cobalt" : m.state === "next" ? "bg-flame ring-4 ring-flame-50" : "border-2 border-line-2 bg-surface")} aria-hidden />
                 </span>
                 <div className="min-w-0">
                   <div className={clsx("text-[14px]", m.state === "upcoming" ? "text-ink-2" : "font-medium text-ink")}>
@@ -126,7 +122,7 @@ export default async function BrandHome() {
         </section>
 
         <div className="space-y-6">
-          <section className="card p-6" aria-labelledby="team">
+          <section className="card p-5" aria-labelledby="team">
             <h2 id="team" className="text-[16px] font-semibold">Your Vigor team</h2>
             <div className="mt-4 flex items-center gap-3">
               <Avatar name={am.name} hue={am.hue} size={44} />
@@ -139,7 +135,7 @@ export default async function BrandHome() {
             <p className="mt-2 text-center text-[12px] text-mute">{am.replies}</p>
           </section>
           {past.length > 0 && (
-            <section className="card p-6" aria-labelledby="past">
+            <section className="card p-5" aria-labelledby="past">
               <h2 id="past" className="text-[16px] font-semibold">Past campaigns</h2>
               <ul className="mt-3 divide-y divide-line">
                 {past.map((p) => (
@@ -165,7 +161,7 @@ function CampaignHero({ c, today }: { c: PortalCampaign; today: string }) {
   return (
     <article className="card overflow-hidden">
       <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
-        <div className="border-b border-line p-6 lg:border-b-0 lg:border-r">
+        <div className="border-b border-line p-5 lg:border-b-0 lg:border-r">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-[12.5px] text-mute">
@@ -174,7 +170,7 @@ function CampaignHero({ c, today }: { c: PortalCampaign; today: string }) {
                   : <span className="inline-flex items-center gap-1.5 font-semibold text-cobalt-700"><CalendarDays className="h-3.5 w-3.5" />{toLive > 0 ? `Goes live in ${toLive} day${toLive === 1 ? "" : "s"}` : "Going live now"}</span>}
                 <span aria-hidden>·</span><span className="tabular-nums">{shortDate(c.start_date)} – {shortDate(c.end_date)}</span>
               </div>
-              <h3 className="mt-2 text-[24px] font-bold leading-tight tracking-[-0.03em]">{c.name}</h3>
+              <h3 className="mt-1.5 text-[19px] leading-tight">{c.name}</h3>
               <p className="mt-1 text-[13.5px] text-mute">{[c.cities.join(", "), c.colleges ? `${c.colleges} campuses` : null, daysLeft >= 0 ? `${daysLeft} days left` : "ended"].filter(Boolean).join(" · ")}</p>
             </div>
             <Link href={isLive ? `/brand/reports/${c.id}` : `/brand/campaigns/${c.id}/shortlist`} className="btn-ghost btn-sm shrink-0">{isLive ? "Live report" : "Shortlist"}<ArrowRight className="h-3.5 w-3.5" /></Link>
@@ -183,18 +179,18 @@ function CampaignHero({ c, today }: { c: PortalCampaign; today: string }) {
           <dl className="mt-6 grid grid-cols-2 gap-4">
             <div>
               <dt className="text-[12.5px] text-mute">Creators confirmed</dt>
-              <dd className="mt-1 font-display text-[22px] font-bold tabular-nums">{c.creators_confirmed}<span className="text-[15px] font-semibold text-faint"> / {c.creators_target}</span></dd>
+              <dd className="mt-1 text-[20px] font-semibold tabular-nums">{c.creators_confirmed}<span className="text-[14px] font-medium text-faint"> / {c.creators_target}</span></dd>
               <Progress value={c.creators_target ? (c.creators_confirmed / c.creators_target) * 100 : 0} className="mt-2" label="Creators confirmed" />
             </div>
             <div>
               <dt className="text-[12.5px] text-mute">Content live</dt>
-              <dd className="mt-1 font-display text-[22px] font-bold tabular-nums">{c.deliverables_live}<span className="text-[15px] font-semibold text-faint"> / {c.deliverables_total}</span></dd>
+              <dd className="mt-1 text-[20px] font-semibold tabular-nums">{c.deliverables_live}<span className="text-[14px] font-medium text-faint"> / {c.deliverables_total}</span></dd>
               <Progress value={c.deliverables_total ? (c.deliverables_live / c.deliverables_total) * 100 : 0} className="mt-2" label="Content live" />
             </div>
           </dl>
         </div>
 
-        <div className="p-6">
+        <div className="p-5">
           {isLive ? (
             <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
               {c.reach > 0 && (
@@ -225,10 +221,10 @@ function CampaignHero({ c, today }: { c: PortalCampaign; today: string }) {
                 <Kpi label="Spend" value={`₹${compact(c.spent)}`}><SpendBar spent={c.spent} budget={c.budget} pct={spendPct} /></Kpi>
               </div>
               {c.shortlist_pending > 0 && <div className="mt-auto pt-6">
-                <div className="flex items-center gap-3 rounded-[16px] bg-flame-50 px-4 py-3 text-[13.5px] text-ink-2">
-                  <UserRoundCheck className="h-4 w-4 shrink-0 text-flame-700" />
+                <div className="flex items-center gap-3 rounded-[10px] border border-line bg-canvas px-4 py-3 text-[13.5px] text-ink-2">
+                  <UserRoundCheck className="h-4 w-4 shrink-0 text-mute" />
                   <span className="min-w-0 flex-1">Approve <b className="text-ink">{c.shortlist_pending} shortlisted creator{c.shortlist_pending === 1 ? "" : "s"}</b> to lock contracts for go-live.</span>
-                  <Link href={`/brand/campaigns/${c.id}/shortlist`} className="font-semibold text-flame-700 hover:underline">Start</Link>
+                  <Link href={`/brand/campaigns/${c.id}/shortlist`} className="font-medium text-cobalt hover:underline">Start</Link>
                 </div>
               </div>}
             </div>
@@ -243,7 +239,7 @@ function Kpi({ label, value, hint, children }: { label: string; value: React.Rea
   return (
     <div className="min-w-0">
       <div className="text-[12.5px] text-mute">{label}</div>
-      <div className="mt-1 mb-2.5 font-display text-[28px] font-bold leading-none tracking-[-0.035em] tabular-nums">{value}</div>
+      <div className="mt-1 mb-2.5 text-[24px] font-semibold leading-none tracking-[-0.02em] tabular-nums">{value}</div>
       {hint && <div className="text-[12.5px] text-mute">{hint}</div>}
       {children}
     </div>
@@ -254,7 +250,7 @@ function SpendBar({ spent, budget, pct }: { spent: number; budget: number; pct: 
   if (!budget) return <div className="text-[12px] text-mute">Committed creator fees · budget not set yet</div>;
   return (
     <div>
-      <Progress value={pct} label="Budget spent" className="h-3" tone={pct > 95 ? "warn" : "cobalt"} />
+      <Progress value={pct} label="Budget spent" tone={pct > 95 ? "warn" : "cobalt"} />
       <div className="mt-1.5 flex justify-between text-[12px] tabular-nums text-mute">
         <span className="font-medium text-ink-2">{Math.round(pct)}% of budget</span>
         <span>₹{compact(budget - spent)} left of ₹{compact(budget)}</span>

@@ -15,7 +15,7 @@ export const PERSONA_HOME: Record<DemoPersona, string> = { creator: "/dashboard"
 export function personaForPath(path: string): DemoPersona | "any" | null {
   if (path.startsWith("/crm")) return "agency";
   if (path.startsWith("/admin")) return "admin";
-  if (path.startsWith("/brand")) return "brand";
+  if (path === "/brand" || path.startsWith("/brand/")) return "brand";
   if (path.startsWith("/dashboard")) return "creator";
   if (path.startsWith("/onboarding")) return "any";
   return null;

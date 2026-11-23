@@ -33,17 +33,17 @@ export function NeedsQueue({ items }: { items: QueueItem[] }) {
   return (
     <section className="card overflow-hidden" aria-labelledby="needs-h">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
-        <h2 id="needs-h" className="flex items-center gap-2 font-display text-[17px] font-semibold tracking-[-0.025em]">
+        <h2 id="needs-h" className="flex items-center gap-2 text-[16px] font-semibold">
           Needs you now
-          <span className="relative grid h-5 min-w-5 place-items-center rounded-full bg-flame px-1.5 font-sans text-[11.5px] font-bold tabular-nums text-night">{open.length}</span>
+          <span className="grid h-5 min-w-5 place-items-center rounded-full bg-canvas-2 px-1.5 text-[12px] font-semibold tabular-nums text-ink-2">{open.length}</span>
         </h2>
         <div className="-mx-1 flex gap-1 overflow-x-auto px-1" role="tablist" aria-label="Filter queue">
           {[["all", open.length] as const, ...counts].map(([k, n]) => (
             <button key={k} role="tab" aria-selected={filter === k} onClick={() => setFilter(k)}
-              className={clsx("inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-medium transition-colors",
-                filter === k ? "bg-night text-white" : "text-mute hover:bg-canvas-2 hover:text-ink")}>
+              className={clsx("inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[8px] px-2.5 text-[13px] font-medium transition-colors",
+                filter === k ? "bg-canvas-2 text-ink" : "text-mute hover:bg-canvas hover:text-ink")}>
               {k === "all" ? "All" : KIND[k].short}
-              <span className={clsx("tabular-nums", filter === k ? "text-white/60" : "text-faint")}>{n}</span>
+              <span className="tabular-nums text-faint">{n}</span>
             </button>
           ))}
         </div>
@@ -56,12 +56,12 @@ export function NeedsQueue({ items }: { items: QueueItem[] }) {
             return (
               <motion.li key={i.id} layout={!reduce} initial={false} exit={{ opacity: 0, x: 24, transition: { duration: 0.2 } }}
                 className="group flex items-center gap-3 px-5 py-3 transition-colors hover:bg-canvas/60">
-                <span className={clsx("grid h-9 w-9 shrink-0 place-items-center rounded-[10px]", k.tone)} title={k.label}>
-                  <k.Icon className="h-[18px] w-[18px]" strokeWidth={1.9} />
+                <span className={clsx("grid h-8 w-8 shrink-0 place-items-center rounded-[8px]", k.tone)} title={k.label}>
+                  <k.Icon className="h-4 w-4" strokeWidth={1.9} />
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="truncate text-[14px] font-semibold text-ink">{i.title}</span>
+                    <span className="truncate text-[14px] font-medium text-ink">{i.title}</span>
                     <span className="shrink-0 text-[12px] tabular-nums text-faint">{i.age}</span>
                   </div>
                   <div className="mt-0.5 flex items-center gap-1.5 truncate text-[12.5px] text-mute">
@@ -72,14 +72,14 @@ export function NeedsQueue({ items }: { items: QueueItem[] }) {
                 <div className="flex shrink-0 items-center gap-1.5">
                   {i.secondary && <Link href={i.secondary.href} className="btn-quiet btn-sm hidden md:inline-flex">{i.secondary.label}</Link>}
                   {external ? (
-                    <a href={i.href} target="_blank" rel="noreferrer" onClick={() => complete(i.id)} className="btn btn-sm bg-[#e4f6ea] text-[#0d6b3a] hover:bg-[#d3f0dd]">
-                      <WhatsAppIcon className="h-4 w-4" /><span className="hidden sm:inline">{i.action}</span><span className="sm:hidden">Nudge</span>
+                    <a href={i.href} target="_blank" rel="noreferrer" onClick={() => complete(i.id)} className="btn-ghost btn-sm">
+                      <WhatsAppIcon className="h-3.5 w-3.5 text-[#128C4B]" /><span className="hidden sm:inline">{i.action}</span><span className="sm:hidden">Nudge</span>
                     </a>
                   ) : (
                     <Link href={i.href} className="btn-ghost btn-sm">{i.action}</Link>
                   )}
                   <button onClick={() => complete(i.id)} aria-label={`Mark "${i.title}" done`}
-                    className="grid h-9 w-9 place-items-center rounded-full text-faint transition-colors hover:bg-ok-bg hover:text-ok">
+                    className="grid h-8 w-8 place-items-center rounded-[8px] text-faint transition-colors hover:bg-ok-bg hover:text-ok">
                     <Check className="h-4 w-4" strokeWidth={2.4} />
                   </button>
                 </div>

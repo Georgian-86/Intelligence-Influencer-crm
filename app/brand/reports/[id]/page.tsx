@@ -55,11 +55,11 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
         actions={<DownloadPdf email={brand.email} />}
       />
 
-      <section aria-label="Headline results" className="grid gap-px overflow-hidden rounded-[20px] border border-line bg-line shadow-sm sm:grid-cols-2 lg:grid-cols-4">
+      <section aria-label="Headline results" className="grid gap-px overflow-hidden rounded-[14px] border border-line bg-line shadow-sm sm:grid-cols-2 lg:grid-cols-4">
         {kpis.map((k) => (
           <div key={k.label} className="bg-surface p-5 sm:p-6">
             <div className="text-[13px] text-mute">{k.label}</div>
-            <div className="mt-2 font-display text-[40px] font-bold leading-none tracking-[-0.04em] tabular-nums">{k.value}</div>
+            <div className="mt-2 text-[30px] font-semibold leading-none tracking-[-0.02em] tabular-nums">{k.value}</div>
             <div className="mt-2 text-[12.5px] text-mute">{k.sub}</div>
           </div>
         ))}
@@ -152,11 +152,11 @@ function LiveReport({ brand, c, r }: { brand: BrandAccess; c: LiveCampaign; r: B
         subtitle={`${shortDate(c.start_date)} – ${shortDate(c.end_date)}${c.cities.length ? ` · ${c.cities.join(", ")}` : ""}`}
         actions={<DownloadPdf email={brand.email} />}
       />
-      <section aria-label="Headline results" className="grid gap-px overflow-hidden rounded-[20px] border border-line bg-line shadow-sm sm:grid-cols-2 lg:grid-cols-4">
+      <section aria-label="Headline results" className="grid gap-px overflow-hidden rounded-[14px] border border-line bg-line shadow-sm sm:grid-cols-2 lg:grid-cols-4">
         {kpis.map((k) => (
           <div key={k.label} className="bg-surface p-5 sm:p-6">
             <div className="text-[13px] text-mute">{k.label}</div>
-            <div className="mt-2 font-display text-[40px] font-bold leading-none tracking-[-0.04em] tabular-nums">{k.value}</div>
+            <div className="mt-2 text-[30px] font-semibold leading-none tracking-[-0.02em] tabular-nums">{k.value}</div>
             <div className="mt-2 text-[12.5px] text-mute">{k.sub}</div>
           </div>
         ))}

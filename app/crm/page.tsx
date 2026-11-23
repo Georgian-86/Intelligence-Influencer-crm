@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { clsx } from "clsx";
 import { Building2, CircleCheck, ClipboardPaste, IndianRupee, KanbanSquare, RefreshCw, Users } from "lucide-react";
-import { Metric, Progress, km } from "@/components/kit";
+import { PageIntro, Progress, StatStrip, km } from "@/components/kit";
 import { WhatsAppIcon } from "@/components/brand/icons";
 import { NeedsQueue } from "@/components/crm/needs-queue";
 import { BrandTile, HealthBadge, SectionTitle } from "@/components/crm/ui";
@@ -36,38 +36,33 @@ export default async function CrmToday() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-[13px] font-medium text-mute">{longDay(now)}</p>
-          <h1 className="mt-1 font-display text-[30px] font-semibold leading-[1.1] tracking-[-0.04em] sm:text-[36px]">
-            {greet}, <span className="font-serif text-[1.08em] font-normal italic tracking-[-0.01em]">{first}</span>.
-          </h1>
-          <p className="mt-2 max-w-[60ch] text-[14.5px] text-ink-2">
-            {d.queue.length ? <><strong className="font-semibold text-ink">{d.queue.length} things</strong> need you</> : "Your queue is clear"}
-            {blocked.length > 0 && <>, and <Link href={`/crm/campaigns/${blocked[0].id}`} className="font-semibold text-bad underline decoration-bad/30 underline-offset-2 hover:decoration-bad">{blocked[0].name}</Link> is blocked</>}
-            {risky.length > 0 && <>; {risky.length} campaign{risky.length > 1 ? "s are" : " is"} at risk</>}.
-          </p>
-        </div>
-        <div className="flex gap-2">
+      <PageIntro
+        eyebrow={longDay(now)}
+        title={`${greet}, ${first}`}
+        sub={<>
+          {d.queue.length ? <><strong className="font-semibold text-ink">{d.queue.length} things</strong> need you</> : "Your queue is clear"}
+          {blocked.length > 0 && <>, and <Link href={`/crm/campaigns/${blocked[0].id}`} className="font-medium text-bad underline decoration-bad/30 underline-offset-2 hover:decoration-bad">{blocked[0].name}</Link> is blocked</>}
+          {risky.length > 0 && <>; {risky.length} campaign{risky.length > 1 ? "s are" : " is"} at risk</>}.
+        </>}
+        actions={<>
           <Link href="/crm/talent" className="btn-ghost"><Users className="h-4 w-4" /> Find talent</Link>
           <Link href="/crm/briefs/new" className="btn-primary"><ClipboardPaste className="h-4 w-4" /> Paste a brief</Link>
-        </div>
-      </header>
+        </>}
+      />
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Metric label={isDemo() ? "Reach · 30 days" : "Views on live posts"} value={d.kpis.reach != null ? km(d.kpis.reach) : "—"} delta={growth(d.kpis.reachSeries)} spark={d.kpis.reachSeries.length ? d.kpis.reachSeries : undefined} hint={d.kpis.reach == null ? "Add live post links to track views" : d.kpis.reachSeries.length ? "vs. 4 weeks ago" : "All campaigns"} />
-        <Metric label="Live deliverables" value={d.kpis.live} delta={growth(d.kpis.liveSeries)} spark={d.kpis.liveSeries.length ? d.kpis.liveSeries : undefined} hint="Across active campaigns" />
-        <Metric label="Confirmed creators" value={d.kpis.confirmed} delta={growth(d.kpis.confirmedSeries)} spark={d.kpis.confirmedSeries.length ? d.kpis.confirmedSeries : undefined} hint={`${d.campaigns.reduce((s, c) => s + (c.target ?? 0), 0) || "—"} slots planned`} />
-        <Metric label="Spend vs budget" value={lakh(d.kpis.spent)} spark={d.kpis.spendSeries.length ? d.kpis.spendSeries : undefined}
-          hint={d.kpis.budget ? <><span className="tabular-nums">{budgetPct}%</span> of {lakh(d.kpis.budget)} committed</> : "Agreed fees on confirmed creators"} />
-      </div>
+      <StatStrip items={[
+        { label: isDemo() ? "Reach · 30 days" : "Views on live posts", value: d.kpis.reach != null ? km(d.kpis.reach) : "—", delta: growth(d.kpis.reachSeries), hint: d.kpis.reach == null ? "Add live post links to track views" : d.kpis.reachSeries.length ? "vs. 4 weeks ago" : "All campaigns" },
+        { label: "Live deliverables", value: d.kpis.live, delta: growth(d.kpis.liveSeries), hint: "Across active campaigns" },
+        { label: "Confirmed creators", value: d.kpis.confirmed, delta: growth(d.kpis.confirmedSeries), hint: `${d.campaigns.reduce((s, c) => s + (c.target ?? 0), 0) || "—"} slots planned` },
+        { label: "Spend vs budget", value: lakh(d.kpis.spent), hint: d.kpis.budget ? <><span className="tabular-nums">{budgetPct}%</span> of {lakh(d.kpis.budget)} committed</> : "Agreed fees on confirmed creators" },
+      ]} />
 
       <div className="grid gap-6 lg:grid-cols-12">
         <div className="min-w-0 space-y-6 lg:col-span-8">
           <NeedsQueue items={d.queue} />
 
           <section aria-labelledby="health-h">
-            <SectionTitle action={<Link href="/crm/campaigns" className="text-[13px] font-semibold text-cobalt hover:text-cobalt-700">All campaigns</Link>}>
+            <SectionTitle action={<Link href="/crm/campaigns" className="text-[13px] font-medium text-cobalt hover:text-cobalt-700">All campaigns</Link>}>
               <span id="health-h">Campaign health</span>
             </SectionTitle>
             {d.campaigns.length === 0 ? (
@@ -77,7 +72,7 @@ export default async function CrmToday() {
                 {d.campaigns.map((c) => {
                   const left = daysUntil(c.end, now);
                   return (
-                    <Link key={c.id} href={`/crm/campaigns/${c.id}`} className={clsx("card card-hover group block p-4", c.health === "blocked" && "border-bad/30")}>
+                    <Link key={c.id} href={`/crm/campaigns/${c.id}`} className="card group block p-4 transition-colors hover:border-line-2">
                       <div className="flex items-start gap-3">
                         <BrandTile name={c.brand} hue={c.hue} size={36} />
                         <div className="min-w-0 flex-1">
@@ -121,20 +116,20 @@ export default async function CrmToday() {
                 })}
               </ul>
             )}
-            {d.team.some((t) => t.load >= 0.85) && <p className="mt-4 rounded-[12px] bg-flame-50 px-3 py-2 text-[12.5px] text-flame-700">{d.team.filter((t) => t.load >= 0.85).map((t) => t.name.split(" ")[0]).join(" and ")} are over 85% — reassign before taking new briefs.</p>}
+            {d.team.some((t) => t.load >= 0.85) && <p className="mt-4 border-t border-line pt-3 text-[12.5px] text-flame-700">{d.team.filter((t) => t.load >= 0.85).map((t) => t.name.split(" ")[0]).join(" and ")} are over 85% — reassign before taking new briefs.</p>}
           </section>
 
           <section className="card p-5" aria-labelledby="act-h">
             <SectionTitle><span id="act-h">Activity</span></SectionTitle>
             {d.activity.length === 0 ? <p className="text-[13px] text-mute">Pipeline moves, approvals and WhatsApp replies show up here.</p> : (
               <ol className="relative space-y-4 before:absolute before:bottom-2 before:left-[13px] before:top-2 before:w-px before:bg-line">
-                {d.activity.map((a, i) => {
+                {d.activity.slice(0, 6).map((a, i) => {
                   const k = ACT_ICON[a.kind] ?? ACT_ICON.system;
                   return (
                     <li key={i} className="relative flex gap-3">
-                      <span className={clsx("relative z-[1] grid h-7 w-7 shrink-0 place-items-center rounded-full ring-4 ring-surface", k.cls)}><k.Icon className="h-3.5 w-3.5" /></span>
+                      <span className="relative z-[1] grid h-7 w-7 shrink-0 place-items-center rounded-full bg-canvas-2 text-mute ring-4 ring-surface"><k.Icon className="h-3.5 w-3.5" /></span>
                       <p className="min-w-0 flex-1 pt-0.5 text-[13px] leading-[1.45] text-ink-2">
-                        <span className="font-semibold text-ink">{a.who}</span> {a.what} <span className="font-medium text-ink">{a.target}</span>
+                        <span className="font-medium text-ink">{a.who}</span> {a.what} <span className="text-ink">{a.target}</span>
                         <span className="ml-1.5 text-[12px] tabular-nums text-faint">{a.when}</span>
                       </p>
                     </li>

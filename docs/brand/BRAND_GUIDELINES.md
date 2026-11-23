@@ -86,3 +86,21 @@ status never by colour alone, `aria-live` for async results, full keyboard paths
 ## 10. Do / Don't
 Do: one idea per section · huge confident headlines · real numbers · lots of canvas.
 Don't: dark-by-default UI · neon gradients everywhere · more than one flame element per viewport · centred body text blocks · stock photos.
+
+## 11. Product mode (signed-in workspaces)
+The editorial look above is for marketing pages. Every signed-in workspace (creator, brand portal, agency CRM,
+admin) renders inside `AppShell`, which adds the `.app-ui` scope in `app/globals.css`. Inside it:
+
+- **Canvas** is a cool neutral (`#F6F7F9`), hairlines `#E6E8EE`. Cards are white with a hairline and an almost-flat
+  shadow; no floating, no glow.
+- **Type**: Inter for everything, including headings and numbers. Bricolage and the serif italic stay on marketing.
+  Page title 24–26px (`PageIntro` in `components/kit.tsx`), section titles 16–17px, body 14–15px, metadata 12–13px.
+- **Radius**: buttons and inputs 10px, small buttons 8px, chips and status pills 6px, cards 14px.
+- **One primary action per view.** Row and card actions (Approve, I'm interested, Nudge) are ghost buttons;
+  the page's single main action is the only filled cobalt button.
+- **Numbers**: key figures go in one `StatStrip` (a single card divided by hairlines), not a row of floating tiles.
+  Sparklines only where the trend is the point.
+- **Colour**: cobalt for action and selection, status colours only for status. Flame is reserved for the brand mark
+  and marketing; in charts the second series is `cobalt-300`, not flame.
+- **Mobile**: a flush bottom tab bar (max 5 items, 44px targets, safe-area padding); grids collapse to one column with
+  `minmax(0,1fr)` so nothing overflows.

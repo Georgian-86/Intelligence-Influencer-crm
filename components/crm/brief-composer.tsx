@@ -84,7 +84,7 @@ export function BriefComposer({ talent, campaigns, defaultCampaign, sample, erro
             {filled.length > 0 && (
               <motion.ul initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-4 flex flex-wrap gap-1.5 overflow-hidden border-t border-line pt-3" aria-live="polite" aria-label="Extracted fields">
                 {filled.map((k) => (
-                  <motion.li key={k} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="inline-flex h-6 items-center gap-1 rounded-full bg-ok-bg px-2 text-[11.5px] font-medium text-ok">
+                  <motion.li key={k} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="inline-flex h-6 items-center gap-1 rounded-[6px] bg-ok-bg px-2 text-[11.5px] font-medium text-ok">
                     <Check className="h-3 w-3" strokeWidth={3} />{k.replace(/_/g, " ").replace("display", "").trim()}
                   </motion.li>
                 ))}

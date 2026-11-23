@@ -44,7 +44,7 @@ export function PipelineBoard({ cards: initial, canManage }: { cards: PipelineCa
   };
 
   if (cards.length === 0) {
-    return <div className="rounded-[20px] border border-dashed border-line-2 bg-surface/60 px-6 py-12 text-center text-[14px] text-mute">No creators in this campaign&apos;s briefs yet. Publish a brief or add creators from Talent.</div>;
+    return <div className="rounded-[14px] border border-dashed border-line-2 bg-surface/60 px-6 py-12 text-center text-[14px] text-mute">No creators in this campaign&apos;s briefs yet. Publish a brief or add creators from Talent.</div>;
   }
 
   return (
@@ -58,7 +58,7 @@ export function PipelineBoard({ cards: initial, canManage }: { cards: PipelineCa
               <section key={s} aria-label={`${STAGE_LABEL[s]} (${col.length})`}
                 onDragOver={(e) => { if (drag) { e.preventDefault(); setOver(s); } }} onDragLeave={() => setOver((o) => (o === s ? null : o))}
                 onDrop={(e) => { e.preventDefault(); if (drag) move(drag, s); setDrag(null); setOver(null); }}
-                className={clsx("flex min-h-[420px] flex-col rounded-[18px] border p-2 transition-colors", over === s ? "border-cobalt bg-cobalt-50/70" : "border-line bg-canvas-2/50")}>
+                className={clsx("flex min-h-[420px] flex-col rounded-[14px] border p-2 transition-colors", over === s ? "border-cobalt bg-cobalt-50/70" : "border-line bg-canvas-2/50")}>
                 <header className="flex items-center gap-2 px-2 pb-2 pt-1.5">
                   <span className={clsx("h-2 w-2 rounded-full", DOT[s])} aria-hidden />
                   <h3 className="text-[13px] font-semibold text-ink">{STAGE_LABEL[s]}</h3>
@@ -94,7 +94,7 @@ export function PipelineBoard({ cards: initial, canManage }: { cards: PipelineCa
                         <div className="mt-2 flex items-center gap-1 border-t border-line pt-2" data-menu>
                           <button onClick={() => si > 0 && move(c.id, STAGES[si - 1])} disabled={si === 0} aria-label={`Move ${c.name} back to ${si > 0 ? STAGE_LABEL[STAGES[si - 1]] : ""}`} className="grid h-7 w-7 place-items-center rounded-full text-mute hover:bg-canvas-2 hover:text-ink disabled:opacity-30"><ChevronLeft className="h-4 w-4" /></button>
                           <button onClick={() => si < STAGES.length - 1 && move(c.id, STAGES[si + 1])} disabled={si === STAGES.length - 1} aria-label={`Advance ${c.name} to ${si < 5 ? STAGE_LABEL[STAGES[si + 1]] : ""}`}
-                            className="inline-flex h-7 items-center gap-0.5 rounded-full px-2 text-[12px] font-semibold text-cobalt hover:bg-cobalt-50 disabled:opacity-30">
+                            className="inline-flex h-7 items-center gap-0.5 rounded-[6px] px-2 text-[12px] font-semibold text-cobalt hover:bg-cobalt-50 disabled:opacity-30">
                             {si < 5 ? STAGE_LABEL[STAGES[si + 1]] : "Done"} <ChevronRight className="h-3.5 w-3.5" />
                           </button>
                           <span className="relative ml-auto">

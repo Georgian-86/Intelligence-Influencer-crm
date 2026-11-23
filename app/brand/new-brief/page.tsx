@@ -17,7 +17,7 @@ export default async function NewBrief() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <BriefForm />
         <aside className="space-y-4">
-          <div className="rounded-[28px] bg-night p-6 text-white">
+          <div className="rounded-[14px] bg-night p-6 text-white">
             <div className="flex items-center gap-3">
               <Avatar name={am.name} hue={am.hue} size={44} />
               <div>

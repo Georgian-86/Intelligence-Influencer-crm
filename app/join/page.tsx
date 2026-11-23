@@ -73,7 +73,7 @@ export default function JoinPage() {
             />
           </div>
 
-          <div className="mt-10 flex flex-col items-start justify-between gap-4 rounded-[28px] border border-line bg-surface/70 p-6 sm:flex-row sm:items-center sm:p-7">
+          <div className="mt-10 flex flex-col items-start justify-between gap-4 rounded-[20px] border border-line bg-surface/70 p-6 sm:flex-row sm:items-center sm:p-7">
             <p className="text-[15px] text-ink-2">
               <b className="font-semibold text-ink">Just want to talk?</b> Brands can send a brief without an account.{" "}
               <Link href="/brands" className="font-semibold text-cobalt underline-offset-4 hover:underline">Send a brief</Link>

@@ -46,9 +46,9 @@ export default async function Briefs({ searchParams }: { searchParams: Promise<{
           const on = x.key === f;
           return (
             <Link key={x.key} href={x.key === "all" ? "/dashboard/briefs" : `/dashboard/briefs?f=${x.key}`} aria-current={on ? "page" : undefined}
-              className={clsx("inline-flex h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-[14px] font-medium transition-colors",
-                on ? "border-ink bg-ink text-white" : "border-line bg-surface text-ink-2 hover:border-line-2")}>
-              {x.label}<span className={clsx("tabular-nums text-[12.5px]", on ? "text-white/60" : "text-faint")}>{count(x.key)}</span>
+              className={clsx("inline-flex h-9 shrink-0 items-center gap-1.5 rounded-[8px] border px-3 text-[13.5px] font-medium transition-colors",
+                on ? "border-cobalt/30 bg-cobalt-50 text-cobalt-700" : "border-line bg-surface text-ink-2 hover:border-line-2")}>
+              {x.label}<span className={clsx("tabular-nums text-[12.5px]", on ? "text-cobalt-700/60" : "text-faint")}>{count(x.key)}</span>
             </Link>
           );
         })}
@@ -64,7 +64,7 @@ export default async function Briefs({ searchParams }: { searchParams: Promise<{
         <section className="mt-12" aria-labelledby="other-h">
           <h2 id="other-h" className="font-display text-[18px] font-semibold tracking-[-0.02em]">Not a fit yet</h2>
           <p className="mt-0.5 text-[13.5px] text-mute">Open briefs you don&apos;t qualify for, and why. Update your profile if something&apos;s changed.</p>
-          <ul className="mt-4 divide-y divide-line overflow-hidden rounded-[20px] border border-line bg-surface">
+          <ul className="mt-4 divide-y divide-line overflow-hidden rounded-[14px] border border-line bg-surface">
             {other.map((b) => (
               <li key={b.id}>
                 <Link href={`/dashboard/briefs/${b.id}`} className="flex items-center gap-3 px-4 py-3.5 hover:bg-canvas/70">
@@ -87,8 +87,8 @@ export default async function Briefs({ searchParams }: { searchParams: Promise<{
 function Header({ n }: { n: number }) {
   return (
     <div className="mb-6">
-      <h1 className="font-display text-[34px] font-bold leading-tight tracking-[-0.04em] sm:text-[40px]">Briefs</h1>
-      <p className="mt-1 text-[15px] text-mute">{n ? `${n} open brief${n === 1 ? "" : "s"} match your profile.` : "Live campaigns from Vigor's brands."}</p>
+      <h1 className="text-[24px] leading-tight sm:text-[26px]">Briefs</h1>
+      <p className="mt-1.5 text-[14.5px] text-ink-2">{n ? `${n} open brief${n === 1 ? "" : "s"} match your profile.` : "Live campaigns from Vigor's brands."}</p>
     </div>
   );
 }
