@@ -7,7 +7,7 @@ import { getMyTalent, getUser } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 import { imgSrc } from "@/components/ui";
 import { fmtDate, scoreBrief } from "./score";
-import type { ApplicationVM, BriefVM, CampusVM, CreatorVM, EarningsVM, PaymentStatus, Stage } from "./types";
+import type { ApplicationVM, BriefVM, CampusVM, CreatorVM, EarningsVM, PaymentStatus, Stage, WorkItemVM } from "./types";
 
 export const DEMO_INTEREST_COOKIE = "vtn_demo_interest";
 export const DEMO_SYNC_COOKIE = "vtn_demo_synced";
@@ -19,7 +19,7 @@ const NEXT_STEP: Record<string, string> = {
   contacted: "Reply to Vigor on WhatsApp to lock dates and fee.",
   negotiating: "Agree the fee with Vigor to get confirmed.",
   confirmed: "Upload your draft for approval before the due date.",
-  delivered: "Content approved — payout is being processed.",
+  delivered: "Content is live. Your payout is being processed.",
   rejected: "Not this time. New briefs drop every week.",
   dropped: "This collab was closed.",
 };
@@ -169,35 +169,70 @@ export const getApplications = cache(async (c: CreatorVM): Promise<ApplicationVM
     return [...fresh, ...fixed];
   }
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("intents")
-    .select("id, stage, source, quoted_rate, agreed_rate, created_at, updated_at, brief_id, briefs(title, brand_display, deliverables, event_date)")
-    .eq("talent_id", c.id)
-    .order("updated_at", { ascending: false });
+  const [{ data }, { data: work }, { data: pays }] = await Promise.all([
+    supabase
+      .from("intents")
+      .select("id, stage, source, quoted_rate, agreed_rate, created_at, updated_at, brief_id, briefs(title, brand_display, deliverables, event_date)")
+      .eq("talent_id", c.id)
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("deliverables")
+      .select("id, intent_id, kind, title, due_date, status, live_url, deliverable_versions(version), deliverable_comments(author_role, body, decision, created_at)")
+      .eq("talent_id", c.id)
+      .order("due_date", { ascending: true }),
+    supabase.from("payments").select("intent_id, amount, tds, status, due_date, utr, paid_at").eq("talent_id", c.id),
+  ]);
+  type W = { id: string; intent_id: string; kind: string; title: string | null; due_date: string | null; status: WorkItemVM["status"]; live_url: string | null; deliverable_versions: { version: number }[]; deliverable_comments: { author_role: string; body: string; decision: string | null; created_at: string }[] };
+  const workBy = new Map<string, WorkItemVM[]>();
+  ((work ?? []) as unknown as W[]).forEach((w) => {
+    const fb = (w.deliverable_comments ?? []).filter((m) => m.author_role !== "creator").sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+    const item: WorkItemVM = {
+      id: w.id, kind: w.kind, title: w.title, due: w.due_date, status: w.status, version: (w.deliverable_versions ?? []).length, liveUrl: w.live_url,
+      feedback: fb ? { who: fb.author_role === "brand" ? "Brand" : "Vigor", body: fb.body, at: fb.created_at } : null,
+    };
+    workBy.set(w.intent_id, [...(workBy.get(w.intent_id) ?? []), item]);
+  });
+  type Pay = { intent_id: string; amount: number; tds: number; status: "pending" | "approved" | "paid" | "failed"; due_date: string | null; utr: string | null; paid_at: string | null };
+  const payBy = new Map(((pays ?? []) as Pay[]).map((p) => [p.intent_id, p]));
   return (data ?? []).map((i, n) => {
     const b = i.briefs as unknown as { title: string; brand_display: string | null; deliverables: string | null; event_date: string | null } | null;
     const stage = i.stage as Stage;
-    const payment: PaymentStatus = stage === "delivered" ? "processing" : stage === "confirmed" ? "awaiting_delivery" : "not_started";
+    const p = payBy.get(i.id);
+    const items = workBy.get(i.id) ?? [];
+    const payment: PaymentStatus = p?.status === "paid" ? "paid"
+      : p?.status === "approved" || stage === "delivered" ? "processing"
+      : stage === "confirmed" ? "awaiting_delivery" : "not_started";
     const history: { stage: Stage; at: string }[] = [{ stage: "interested", at: i.created_at }];
     if (stage !== "interested") history.push({ stage, at: i.updated_at });
+    const open = items.filter((w) => w.status !== "live");
+    const needsFix = open.find((w) => w.status === "changes_requested");
+    const toPost = open.find((w) => w.status === "approved");
+    const next = stage !== "confirmed" ? NEXT_STEP[stage] ?? ""
+      : needsFix ? `Changes requested on your ${needsFix.kind}. Upload a new version.`
+      : toPost ? `Your ${toPost.kind} is approved. Post it and paste the live link.`
+      : open.length && open.every((w) => w.status === "draft_submitted") ? "Draft is with Vigor for review. You'll hear back within 24h."
+      : NEXT_STEP.confirmed;
     return {
       id: i.id, briefId: i.brief_id, title: b?.title ?? "Brief closed", brand: b?.brand_display ?? "Confidential brand", hue: (210 + n * 47) % 360,
-      stage, updatedAt: i.updated_at, next: NEXT_STEP[stage] ?? "", fee: i.agreed_rate ?? i.quoted_rate ?? null, payment,
-      deliverableDue: stage === "confirmed" ? b?.event_date ?? null : null, deliverables: b?.deliverables ?? null, history,
+      stage, updatedAt: p?.paid_at ?? i.updated_at, next: p?.status === "paid" ? `Paid${p.utr ? ` · UTR ${p.utr}` : ""}.` : next, fee: p?.amount ?? i.agreed_rate ?? i.quoted_rate ?? null, payment,
+      deliverableDue: open[0]?.due ?? (stage === "confirmed" ? b?.event_date ?? null : null), deliverables: b?.deliverables ?? null, history,
       source: (i.source as "applied" | "invited") ?? "applied",
+      work: items,
+      payout: p ? { amount: p.amount, tds: p.tds, net: p.amount - p.tds, status: p.status, due: p.due_date, utr: p.utr, paidAt: p.paid_at } : null,
     };
   });
 });
 
 export function getEarnings(apps: ApplicationVM[]): EarningsVM {
   if (isDemo()) return { paid: ME_EARNINGS.paid_total, pending: ME_EARNINGS.pending_total, months: ME_EARNINGS.months, labels: ME_EARNINGS.month_labels };
-  const paid = apps.filter((a) => a.payment === "paid").reduce((s, a) => s + (a.fee ?? 0), 0);
-  const pending = apps.filter((a) => a.stage === "confirmed" || a.payment === "processing").reduce((s, a) => s + (a.fee ?? 0), 0);
+  const net = (a: ApplicationVM) => (a.payout ? a.payout.net : a.fee ?? 0);
+  const paid = apps.filter((a) => a.payment === "paid").reduce((s, a) => s + net(a), 0);
+  const pending = apps.filter((a) => a.payment !== "paid" && (a.stage === "confirmed" || a.stage === "delivered")).reduce((s, a) => s + net(a), 0);
   const labels: string[] = [], months: number[] = [];
   for (let m = 5; m >= 0; m--) {
     const d = new Date(); d.setMonth(d.getMonth() - m);
     labels.push(d.toLocaleDateString("en-IN", { month: "short" }));
-    months.push(apps.filter((a) => a.stage === "delivered" && new Date(a.updatedAt).getMonth() === d.getMonth()).reduce((s, a) => s + (a.fee ?? 0), 0));
+    months.push(apps.filter((a) => a.payment === "paid" && new Date(a.updatedAt).getMonth() === d.getMonth() && new Date(a.updatedAt).getFullYear() === d.getFullYear()).reduce((s, a) => s + net(a), 0));
   }
   return { paid, pending, months, labels };
 }

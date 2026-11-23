@@ -88,7 +88,7 @@ export function deliverableDue(d: { id: string; status: string; due: string }) {
 export type ReviewComment = { id: string; who: string; role: "Agency" | "Brand" | "Creator"; body: string; at: string; version: number; hue: number; resolved?: boolean };
 export type Submission = {
   deliverable_id: string; campaign_id: string; creator_id: string; kind: string; status: string; due: string; hue: number;
-  versions: { v: number; at: string; caption: string; duration: string }[];
+  versions: { v: number; at: string; caption: string; duration: string; url?: string | null; media?: "video" | "image" | "link" }[];
   comments: ReviewComment[]; brand_visible: boolean;
   checklist: { label: string; ok: boolean }[];
 };

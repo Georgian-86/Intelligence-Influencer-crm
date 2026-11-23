@@ -83,6 +83,13 @@ export function PipelineBoard({ cards: initial, canManage }: { cards: PipelineCa
                         <span className="truncate whitespace-nowrap tabular-nums text-ink-2" title={c.agreed ? "Agreed fee" : "Quoted fee"}>{c.agreed ? <><strong className="font-semibold text-ink">₹{c.agreed.toLocaleString("en-IN")}</strong> agreed</> : c.quoted ? <>₹{c.quoted.toLocaleString("en-IN")} quoted</> : "No quote"}</span>
                       </div>
                       <div className="mt-2 truncate text-[11.5px] text-mute">{c.source === "invited" ? "Invited · " : ""}{c.brief}</div>
+                      {c.sharedWithBrand && (
+                        <div title={c.brandNote ?? undefined} className={clsx("mt-1.5 inline-flex max-w-full items-center gap-1 truncate rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                          c.brandDecision === "approved" ? "bg-ok-bg text-ok" : c.brandDecision === "passed" ? "bg-bad-bg text-bad" : c.brandDecision === "question" ? "bg-warn-bg text-warn" : "bg-cobalt-50 text-cobalt-700")}>
+                          {c.brandDecision === "approved" ? "Brand approved" : c.brandDecision === "passed" ? "Brand passed" : c.brandDecision === "question" ? `Brand asked: ${c.brandNote ?? "a question"}` : "With brand"}
+                          {c.brandFee ? <span className="font-medium opacity-75"> · ₹{c.brandFee.toLocaleString("en-IN")}</span> : null}
+                        </div>
+                      )}
                       {canManage && (
                         <div className="mt-2 flex items-center gap-1 border-t border-line pt-2" data-menu>
                           <button onClick={() => si > 0 && move(c.id, STAGES[si - 1])} disabled={si === 0} aria-label={`Move ${c.name} back to ${si > 0 ? STAGE_LABEL[STAGES[si - 1]] : ""}`} className="grid h-7 w-7 place-items-center rounded-full text-mute hover:bg-canvas-2 hover:text-ink disabled:opacity-30"><ChevronLeft className="h-4 w-4" /></button>

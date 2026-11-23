@@ -16,6 +16,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const switchLinks = [
     ...(access.some((a) => a.orgType === "agency") ? [{ href: "/crm", label: "Agency CRM" }] : []),
     ...(access.some((a) => a.orgType === "platform") ? [{ href: "/admin", label: "Admin" }] : []),
+    ...(access.some((a) => a.orgType === "brand") ? [{ href: "/brand", label: "Brand portal" }] : []),
   ];
   return (
     <AppShell area="Creator" orgName="Vigor Talent" email={user.email ?? undefined} userName={creator?.name} nav={nav} switchLinks={switchLinks} signOutAction={signOut}>
@@ -23,3 +24,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
     </AppShell>
   );
 }
+
+/** Instagram fetches (Apify) take 10–30s; give server actions on these pages time to finish. */
+export const maxDuration = 60;

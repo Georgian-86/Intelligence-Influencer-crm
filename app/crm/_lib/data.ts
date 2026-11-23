@@ -14,7 +14,8 @@ import { createClient } from "@/lib/supabase/server";
 import { searchPool, type PoolRow } from "@/lib/pool";
 import { imgSrc } from "@/components/ui";
 import { matchScore } from "@/components/crm/match-score";
-import type { BriefCriteriaVM, CampaignVM, DeliverableRow, EnquiryVM, Health, PipelineCard, PipelineStage, TalentRow } from "@/components/crm/types";
+import type { BrandDecision, BriefCriteriaVM, CampaignVM, DeliverableRow, EnquiryVM, Health, PipelineCard, PipelineStage, TalentRow } from "@/components/crm/types";
+import { liveDeliverables, liveReport, liveSubmissions } from "./execution";
 
 export const crmNow = () => (isDemo() ? DEMO_NOW : Date.now());
 
@@ -133,25 +134,42 @@ function demoCampaignVM(c: (typeof CAMPAIGNS)[number]): CampaignVM {
 
 type LiveCampaign = {
   id: string; name: string; brand_name: string | null; status: string; start_date: string | null; end_date: string | null; description?: string | null;
+  budget: number | null; creators_target: number | null; go_live: string | null; reach_target: number | null; views_target: number | null; er_target: number | null;
+  owner_id: string | null; brand_org_id: string | null;
+  owner: { full_name: string | null; email: string | null } | null;
+  brand_org: { name: string } | null;
   briefs: { id: string; status: string; budget_max: number | null; cities: string[]; intents: { stage: string; agreed_rate: number | null; deliverable_links: string[] }[] }[];
+  deliverables: { status: string; views: number | null; likes: number | null; comments: number | null }[];
 };
 
 function liveCampaignVM(c: LiveCampaign, now: number): CampaignVM {
   const intents = (c.briefs ?? []).flatMap((b) => b.intents ?? []);
   const booked = intents.filter((i) => i.stage === "confirmed" || i.stage === "delivered");
   const spent = booked.reduce((s, i) => s + (i.agreed_rate ?? 0), 0);
-  const live = booked.filter((i) => (i.deliverable_links ?? []).length > 0).length;
+  const dels = c.deliverables ?? [];
+  const liveDels = dels.filter((d) => d.status === "live");
+  const live = liveDels.length;
+  const views = liveDels.reduce((s, d) => s + (d.views ?? 0), 0);
+  const eng = liveDels.reduce((s, d) => s + (d.likes ?? 0) + (d.comments ?? 0), 0);
   const overdueEnd = c.status === "active" && c.end_date && new Date(c.end_date).getTime() < now;
   const health: Health = overdueEnd ? "blocked" : c.status === "active" && booked.length === 0 ? "at_risk" : "on_track";
-  const reason = overdueEnd ? "End date has passed but the campaign is still active" : health === "at_risk" ? "No creators confirmed yet" : `${booked.length} creators confirmed across ${(c.briefs ?? []).length} briefs`;
+  const overBudget = c.budget != null && spent > c.budget;
+  const finalHealth: Health = overBudget ? "at_risk" : health;
+  const reason = overdueEnd ? "End date has passed but the campaign is still active"
+    : overBudget ? "Creator fees are above the campaign budget"
+    : health === "at_risk" ? "No creators confirmed yet"
+    : `${booked.length}${c.creators_target ? ` of ${c.creators_target}` : ""} creators confirmed across ${(c.briefs ?? []).length} briefs`;
   return {
-    id: c.id, name: c.name, brand: c.brand_name ?? "—", status: c.status, start: c.start_date, end: c.end_date, budget: null, spent, owner: null,
-    confirmed: booked.length, target: null, live, deliverables: booked.length, reach: null, views: null, er: null,
-    cities: Array.from(new Set((c.briefs ?? []).flatMap((b) => b.cities ?? []))), hue: hashHue(c.id), health, reason, briefs: (c.briefs ?? []).length,
+    id: c.id, name: c.name, brand: c.brand_name ?? c.brand_org?.name ?? "—", status: c.status, start: c.start_date, end: c.end_date, budget: c.budget, spent,
+    owner: c.owner?.full_name ?? c.owner?.email ?? null,
+    confirmed: booked.length, target: c.creators_target, live, deliverables: dels.length, reach: null, views: views || null, er: views ? Math.round((eng / views) * 1000) / 10 : null,
+    cities: Array.from(new Set((c.briefs ?? []).flatMap((b) => b.cities ?? []))), hue: hashHue(c.id), health: finalHealth, reason, briefs: (c.briefs ?? []).length,
+    brandOrgId: c.brand_org_id, brandOrgName: c.brand_org?.name ?? null, goLive: c.go_live, ownerId: c.owner_id,
+    targets: { reach: c.reach_target, views: c.views_target, er: c.er_target != null ? Number(c.er_target) : null },
   };
 }
 
-const CAMPAIGN_SELECT = "id, name, brand_name, status, start_date, end_date, description, briefs(id, status, budget_max, cities, intents(stage, agreed_rate, deliverable_links))";
+const CAMPAIGN_SELECT = "id, name, brand_name, status, start_date, end_date, description, budget, creators_target, go_live, reach_target, views_target, er_target, owner_id, brand_org_id, owner:profiles!campaigns_owner_id_fkey(full_name, email), brand_org:organizations!campaigns_brand_org_id_fkey(name), briefs(id, status, budget_max, cities, intents(stage, agreed_rate, deliverable_links)), deliverables(status, views, likes, comments)";
 
 export const listCampaigns = cache(async (orgId: string): Promise<CampaignVM[]> => {
   if (isDemo()) return CAMPAIGNS.map(demoCampaignVM);
@@ -186,33 +204,35 @@ export async function getCampaignWorkspace(id: string, orgId: string): Promise<C
   if (!c) return null;
   const { data: briefRows } = await supabase
     .from("briefs")
-    .select("id, title, status, talent_kind, categories, cities, min_followers, max_followers, min_engagement, ranks, brand_display, intents(id, stage, source, quoted_rate, agreed_rate, deliverable_links, updated_at, talent_profiles(id, display_name, city, rank, is_influencer, is_event_talent, categories, rate_per_post, social_accounts(handle, followers, engagement_rate, profile_pic_url)))")
+    .select("id, title, status, talent_kind, categories, cities, min_followers, max_followers, min_engagement, ranks, brand_display, intents(id, stage, source, quoted_rate, agreed_rate, brand_fee, shared_with_brand_at, deliverable_links, updated_at, shortlist_decisions(decision, note), talent_profiles(id, display_name, city, rank, is_influencer, is_event_talent, categories, rate_per_post, social_accounts(handle, followers, engagement_rate, profile_pic_url)))")
     .eq("campaign_id", id)
     .order("created_at", { ascending: false });
-  type BR = LiveBrief & { status: string; intents: { id: string; stage: string; source: string; quoted_rate: number | null; agreed_rate: number | null; deliverable_links: string[]; updated_at: string; talent_profiles: { id: string; display_name: string; city: string | null; rank: string; is_influencer: boolean; is_event_talent: boolean; categories: string[]; rate_per_post: number | null; social_accounts: { handle: string; followers: number | null; engagement_rate: number | null; profile_pic_url: string | null }[] } | null }[] };
+  type BR = LiveBrief & { status: string; intents: { id: string; stage: string; source: string; quoted_rate: number | null; agreed_rate: number | null; brand_fee: number | null; shared_with_brand_at: string | null; shortlist_decisions: { decision: BrandDecision; note: string | null } | { decision: BrandDecision; note: string | null }[] | null; deliverable_links: string[]; updated_at: string; talent_profiles: { id: string; display_name: string; city: string | null; rank: string; is_influencer: boolean; is_event_talent: boolean; categories: string[]; rate_per_post: number | null; social_accounts: { handle: string; followers: number | null; engagement_rate: number | null; profile_pic_url: string | null }[] } | null }[] };
   const briefs = (briefRows ?? []) as unknown as BR[];
   const cards: PipelineCard[] = [];
-  const deliverables: DeliverableRow[] = [];
+  const deliverables: DeliverableRow[] = await liveDeliverables(id);
   briefs.forEach((b) => (b.intents ?? []).forEach((i) => {
     const t = i.talent_profiles;
     if (!t || !BOARD.includes(i.stage as PipelineStage)) return;
     const ig = t.social_accounts?.[0];
     const row: TalentRow = { id: t.id, name: t.display_name, handle: ig?.handle ?? null, photo: null, hue: hashHue(t.id), city: t.city, college: null, campus: t.categories.includes("Student / Campus"), followers: ig?.followers ?? null, er: ig?.engagement_rate ?? null, avgViews: null, avgLikes: null, rank: t.rank, rate: t.rate_per_post, verified: false, availability: "available", categories: t.categories, influencer: t.is_influencer, event: t.is_event_talent, growth: [], rating: null };
-    cards.push({ id: i.id, stage: i.stage as PipelineStage, talentId: t.id, name: t.display_name, handle: row.handle, hue: row.hue, photo: ig?.profile_pic_url ? imgSrc(ig.profile_pic_url) : null, followers: row.followers, match: matchScore(liveBriefVM(b), row), quoted: i.quoted_rate, agreed: i.agreed_rate, brief: b.title, source: i.source, updated: i.updated_at });
-    if (i.stage === "confirmed" || i.stage === "delivered") {
-      deliverables.push({ id: i.id, talentId: t.id, name: t.display_name, handle: row.handle, hue: row.hue, kind: b.talent_kind === "event" ? "Event" : "Reel", due: null, version: Math.max(1, (i.deliverable_links ?? []).length), status: (i.deliverable_links ?? []).length ? "live" : "brief_sent", views: null });
-    }
+    const dec = Array.isArray(i.shortlist_decisions) ? i.shortlist_decisions[0] : i.shortlist_decisions;
+    cards.push({
+      id: i.id, stage: i.stage as PipelineStage, talentId: t.id, name: t.display_name, handle: row.handle, hue: row.hue, photo: ig?.profile_pic_url ? imgSrc(ig.profile_pic_url) : null,
+      followers: row.followers, match: matchScore(liveBriefVM(b), row), quoted: i.quoted_rate, agreed: i.agreed_rate, brief: b.title, source: i.source, updated: i.updated_at,
+      sharedWithBrand: !!i.shared_with_brand_at, brandDecision: dec?.decision ?? null, brandNote: dec?.note ?? null, brandFee: i.brand_fee,
+    });
   }));
   return { campaign: liveCampaignVM(c as unknown as LiveCampaign, Date.now()), description: (c as { description?: string | null }).description ?? null, cards, deliverables, briefs: briefs.map((b) => ({ id: b.id, title: b.title, status: b.status })) };
 }
 
-export function getReport(id: string) {
-  if (!isDemo()) return { daily: [] as number[], cities: [] as { label: string; value: number }[] };
-  return { daily: dailyViews(id), cities: cityReach(id) };
+export async function getReport(id: string): Promise<{ daily: number[]; labels: string[] | null; cities: { label: string; value: number }[] }> {
+  if (!isDemo()) return liveReport(id);
+  return { daily: dailyViews(id), labels: null, cities: cityReach(id) };
 }
 
-export function getSubmissions(id: string): Submission[] {
-  return isDemo() ? submissionsFor(id) : [];
+export async function getSubmissions(id: string, brand = "Brand"): Promise<(Submission & { name?: string; handle?: string })[]> {
+  return isDemo() ? submissionsFor(id) : liveSubmissions(id, brand);
 }
 
 /* ---------------- briefs ---------------- */
@@ -315,13 +335,23 @@ export async function getToday(orgId: string): Promise<TodayData> {
     };
   }
   const supabase = await createClient();
-  const [enq, waiting] = await Promise.all([
+  const [enq, waiting, reviews, events, decisions, members] = await Promise.all([
     supabase.from("brand_enquiries").select("id, company, budget, requirement, created_at").eq("status", "new").order("created_at", { ascending: false }).limit(3),
     supabase.from("intents").select("id, updated_at, talent_profiles(id, display_name), briefs(id, title, campaign_id)").eq("org_id", orgId).eq("stage", "interested").order("updated_at", { ascending: false }).limit(4),
+    supabase.from("deliverables").select("id, kind, campaign_id, updated_at, talent_profiles(display_name), campaigns(name)").eq("org_id", orgId).eq("status", "draft_submitted").order("updated_at", { ascending: true }).limit(4),
+    supabase.from("pipeline_events").select("id, to_stage, created_at, profiles(full_name, email), intents(talent_profiles(display_name), briefs(title))").eq("org_id", orgId).order("created_at", { ascending: false }).limit(8),
+    supabase.from("shortlist_decisions").select("decision, decided_at, intents(talent_profiles(display_name), briefs(campaigns(name, brand_name)))").eq("org_id", orgId).order("decided_at", { ascending: false }).limit(4),
+    supabase.from("memberships").select("user_id, role, profiles(full_name, email)").eq("org_id", orgId),
   ]);
   const now = Date.now();
   const age = (d: string) => { const h = Math.max(1, Math.round((now - new Date(d).getTime()) / 3600000)); return h < 24 ? `${h}h` : `${Math.round(h / 24)}d`; };
+  type P = { full_name: string | null; email: string | null } | null;
   const queue: QueueItem[] = [
+    ...(reviews.data ?? []).map((d) => {
+      const t = d.talent_profiles as unknown as { display_name: string } | null;
+      const k = d.campaigns as unknown as { name: string } | null;
+      return { id: `q-${d.id}`, kind: "review" as const, title: `${d.kind} draft from ${t?.display_name ?? "a creator"}`, meta: k?.name ?? "", href: `/crm/campaigns/${d.campaign_id}/review?d=${d.id}`, action: "Review", hue: hashHue(d.id), who: t?.display_name ?? "", age: age(d.updated_at) };
+    }),
     ...(enq.data ?? []).map((e) => ({ id: `q-${e.id}`, kind: "enquiry" as const, title: `${e.company}${e.budget ? ` · ${e.budget}` : ""}`, meta: String(e.requirement).slice(0, 80), href: "/crm/enquiries", action: "Reply", hue: hashHue(e.company), who: e.company, age: age(e.created_at) })),
     ...(waiting.data ?? []).map((i) => {
       const t = i.talent_profiles as unknown as { id: string; display_name: string } | null;
@@ -329,11 +359,33 @@ export async function getToday(orgId: string): Promise<TodayData> {
       return { id: `q-${i.id}`, kind: "reply" as const, title: `${t?.display_name ?? "Creator"} is interested`, meta: b?.title ?? "", href: `/crm/campaigns/${b?.campaign_id}`, action: "Review", secondary: { label: "Profile", href: `/crm/talent/${t?.id}` }, hue: hashHue(t?.id ?? ""), who: t?.display_name ?? "", age: age(i.updated_at) };
     }),
   ];
+  type Ev = { id: number; to_stage: string; created_at: string; profiles: P; intents: { talent_profiles: { display_name: string } | null; briefs: { title: string } | null } | null };
+  type Dec = { decision: string; decided_at: string; intents: { talent_profiles: { display_name: string } | null; briefs: { campaigns: { name: string; brand_name: string | null } | null } | null } | null };
+  const activity = [
+    ...((events.data ?? []) as unknown as Ev[]).map((e) => ({
+      at: e.created_at, who: e.profiles?.full_name ?? e.profiles?.email ?? e.intents?.talent_profiles?.display_name ?? "Someone",
+      what: e.to_stage === "interested" ? "applied to" : `moved ${e.intents?.talent_profiles?.display_name ?? "a creator"} to ${e.to_stage} on`,
+      target: e.intents?.briefs?.title ?? "", when: age(e.created_at), kind: e.to_stage === "confirmed" ? "approve" : "pipeline",
+    })),
+    ...((decisions.data ?? []) as unknown as Dec[]).map((d) => ({
+      at: d.decided_at, who: `${d.intents?.briefs?.campaigns?.brand_name ?? "Brand"} (brand)`,
+      what: `${d.decision === "approved" ? "approved" : d.decision === "passed" ? "passed on" : "asked about"} ${d.intents?.talent_profiles?.display_name ?? "a creator"} for`,
+      target: d.intents?.briefs?.campaigns?.name ?? "", when: age(d.decided_at), kind: "brand",
+    })),
+  ].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 8).map(({ at: _at, ...a }) => (void _at, a));
+  // Team load: active campaigns owned, against a soft capacity of 4 per person.
+  const owned = new Map<string, number>();
+  campaigns.forEach((c) => { if (c.ownerId && c.status === "active") owned.set(c.ownerId, (owned.get(c.ownerId) ?? 0) + 1); });
+  const team = (members.data ?? []).filter((m) => m.role !== "scout").map((m) => {
+    const p = m.profiles as unknown as P;
+    return { name: p?.full_name ?? p?.email ?? "Teammate", role: m.role.replace(/_/g, " "), load: Math.min(1, (owned.get(m.user_id) ?? 0) / 4), hue: hashHue(m.user_id) };
+  }).filter((t) => t.load > 0);
+  const budget = activeCamps.reduce((s, c) => s + (c.budget ?? 0), 0);
   return {
     queue,
     campaigns: activeCamps,
-    kpis: { reach: null, reachSeries: [], live: campaigns.reduce((s, c) => s + c.live, 0), liveSeries: [], confirmed: campaigns.reduce((s, c) => s + c.confirmed, 0), confirmedSeries: [], spent: activeCamps.reduce((s, c) => s + c.spent, 0), budget: null, spendSeries: [] },
-    activity: [],
-    team: [],
+    kpis: { reach: campaigns.reduce((s, c) => s + (c.views ?? 0), 0) || null, reachSeries: [], live: campaigns.reduce((s, c) => s + c.live, 0), liveSeries: [], confirmed: campaigns.reduce((s, c) => s + c.confirmed, 0), confirmedSeries: [], spent: activeCamps.reduce((s, c) => s + c.spent, 0), budget: budget || null, spendSeries: [] },
+    activity,
+    team,
   };
 }

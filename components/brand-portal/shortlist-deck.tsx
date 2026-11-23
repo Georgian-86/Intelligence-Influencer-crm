@@ -1,19 +1,29 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useTransform, type PanInfo } from "motion/react";
 import { clsx } from "clsx";
 import { BadgeCheck, Check, ChevronLeft, ChevronRight, GraduationCap, Lock, MapPin, MessageCircleQuestion, Send, Sparkles, Undo2, X } from "lucide-react";
 import { Avatar, MediaTile, km } from "@/components/kit";
 import type { BrandCreator } from "@/lib/demo/portal";
+import { sendShortlistDecisions } from "@/app/brand/actions";
 
 type Decision = { d: "approve" | "pass" | "question"; q?: string };
 const QUICK_QS = ["Can they shoot on fest day (28 Nov)?", "Any past QSR or food-brand work?", "Exclusive with other pizza brands?", "Can they add a 4th Story?"];
-const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+const inr = (n: number | null | undefined) => (n == null ? "Fee in proposal" : `₹${n.toLocaleString("en-IN")}`);
+const pctOr = (n: number | null) => (n == null ? "—" : `${n}%`);
 const RANK: Record<string, string> = { bronze: "bg-[#f6ebe1] text-bronze", silver: "bg-[#eef0f4] text-silver", gold: "bg-[#fbf3d9] text-gold", platinum: "bg-[#e1f3f8] text-platinum" };
 
-export function ShortlistDeck({ creators, target, campaignName, deliverable }: { creators: BrandCreator[]; target: number; campaignName: string; deliverable: string }) {
-  const [decisions, setDecisions] = useState<Record<string, Decision>>({});
+export function ShortlistDeck({ creators, target, campaignName, deliverable, campaignId, amName = "Your account manager" }: { creators: BrandCreator[]; target: number; campaignName: string; deliverable: string; campaignId?: string; amName?: string }) {
+  const [decisions, setDecisions] = useState<Record<string, Decision>>(() => Object.fromEntries(creators.filter((c) => c.decision).map((c) => [c.id, { d: c.decision!, q: c.note ?? undefined }])));
+  const [saving, startSave] = useTransition();
+  const [sendErr, setSendErr] = useState<string | null>(null);
+  const send = () => startSave(async () => {
+    setSendErr(null);
+    const r = await sendShortlistDecisions(campaignId ?? "", Object.entries(decisions).map(([id, v]) => ({ id, d: v.d, q: v.q ?? null })));
+    if (!r.ok) { setSendErr(r.error ?? "Couldn't send. Try again."); return; }
+    setSent(true);
+  });
   const [idx, setIdx] = useState(0);
   const [dir, setDir] = useState(1);
   const [asking, setAsking] = useState(false);
@@ -24,7 +34,7 @@ export function ShortlistDeck({ creators, target, campaignName, deliverable }: {
   const passed = creators.filter((c) => decisions[c.id]?.d === "pass").length;
   const questions = creators.filter((c) => decisions[c.id]?.d === "question").length;
   const reviewed = Object.keys(decisions).length;
-  const fee = approved.reduce((a, c) => a + c.fee, 0);
+  const fee = approved.reduce((a, c) => a + (c.fee ?? 0), 0);
   const allDone = reviewed === creators.length;
   const current = creators[idx];
 
@@ -79,7 +89,7 @@ export function ShortlistDeck({ creators, target, campaignName, deliverable }: {
       <div className="sticky top-16 z-20 mb-6">
         <div className={clsx("flex flex-wrap items-center gap-x-6 gap-y-3 rounded-[22px] border px-5 py-3.5 shadow-md backdrop-blur-xl", sent ? "border-ok/30 bg-ok-bg/95" : "border-line bg-surface/95")} aria-live="polite">
           {sent ? (
-            <p className="flex items-center gap-2 text-[14px] font-medium text-ok"><Check className="h-4 w-4" /> Sent to Vigor. Kunal will lock contracts with {approved.length} creators by tomorrow, 6 pm.</p>
+            <p className="flex items-center gap-2 text-[14px] font-medium text-ok"><Check className="h-4 w-4" /> Sent to Vigor. {amName.split(" ")[0]} will lock contracts with {approved.length} creator{approved.length === 1 ? "" : "s"} and reply to your questions.</p>
           ) : (
             <>
               <div className="min-w-[180px] flex-1">
@@ -96,7 +106,8 @@ export function ShortlistDeck({ creators, target, campaignName, deliverable }: {
                 <div><dt className="text-mute">Passed</dt><dd className="font-semibold tabular-nums">{passed}</dd></div>
                 <div><dt className="text-mute">Questions</dt><dd className="font-semibold tabular-nums">{questions}</dd></div>
               </dl>
-              <button onClick={() => setSent(true)} disabled={reviewed === 0} className="btn-primary shrink-0 px-4 sm:px-5" aria-label="Send decisions to Vigor">
+              {sendErr && <p role="alert" className="w-full text-[12.5px] font-medium text-bad sm:order-last">{sendErr}</p>}
+              <button onClick={send} disabled={reviewed === 0 || saving} className="btn-primary shrink-0 px-4 sm:px-5" aria-label="Send decisions to Vigor">
                 <Send className="h-4 w-4" /> <span className="sm:hidden">Send</span><span className="hidden sm:inline">{allDone ? "Send decisions to Vigor" : `Send ${reviewed} decision${reviewed === 1 ? "" : "s"}`}</span>
               </button>
             </>
@@ -147,7 +158,7 @@ export function ShortlistDeck({ creators, target, campaignName, deliverable }: {
                     <Avatar name={c.name} hue={c.hue} size={32} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[13.5px] font-medium">{c.name}</span>
-                      <span className="block truncate text-[12px] tabular-nums text-mute">{km(c.followers)} · {c.er.toFixed(1)}% ER · {inr(c.fee)}</span>
+                      <span className="block truncate text-[12px] tabular-nums text-mute">{km(c.followers)} · {c.er.toFixed(1)}% ER{c.fee != null ? ` · ${inr(c.fee)}` : ""}</span>
                     </span>
                     <DecisionDot d={d} />
                   </button>
@@ -228,7 +239,7 @@ function SwipeCard({ c, dir, decision, deliverable, onSwipe, asking, setAsking, 
             {[
               ["Followers", km(c.followers)],
               ["Engagement", `${c.er.toFixed(1)}%`],
-              ["Age 18–24", `${c.audience_18_24}%`],
+              c.audience_18_24 != null ? ["Age 18–24", pctOr(c.audience_18_24)] : ["Posts shown", String(c.posts.length || "—")],
               ["Avg views", km(c.avg_views)],
             ].map(([l, v]) => (
               <div key={l} className="bg-surface px-3 py-3">
@@ -254,20 +265,25 @@ function SwipeCard({ c, dir, decision, deliverable, onSwipe, asking, setAsking, 
         <div className="border-t border-line bg-canvas/40 p-5 sm:p-7 md:border-l md:border-t-0">
           <div className="mb-2 text-[12.5px] font-medium text-ink-2">Recent content</div>
           <div className="grid grid-cols-3 gap-2">
-            {tiles.map((p) => <MediaTile key={p.id} hue={p.hue} type={p.type} views={p.views} />)}
+            {tiles.map((p) => p.url
+              ? <a key={p.id} href={p.url} target="_blank" rel="noreferrer" aria-label="Open post on Instagram"><MediaTile hue={p.hue} type={p.type} views={p.views} thumb={p.thumb} /></a>
+              : <MediaTile key={p.id} hue={p.hue} type={p.type} views={p.views} thumb={p.thumb} />)}
+            {tiles.length === 0 && <p className="col-span-3 text-[12.5px] text-mute">Recent posts appear after the next Instagram sync.</p>}
           </div>
           <div className="mt-5 flex items-end justify-between gap-3">
             <div>
               <div className="text-[12.5px] text-mute">Proposed fee</div>
               <div className="font-display text-[30px] font-bold leading-none tracking-[-0.03em] tabular-nums">{inr(c.fee)}</div>
-              <div className="mt-1 text-[12px] text-mute">{deliverable}</div>
+              <div className="mt-1 text-[12px] text-mute">{c.deliverable ?? deliverable}</div>
             </div>
-            <div className="text-right text-[12px] text-mute">Reliability<div className="font-display text-[18px] font-bold text-ink tabular-nums">{c.reliability}<span className="text-[12px] text-faint">/100</span></div></div>
+            {c.reliability != null && <div className="text-right text-[12px] text-mute">Reliability<div className="font-display text-[18px] font-bold text-ink tabular-nums">{c.reliability}<span className="text-[12px] text-faint">/100</span></div></div>}
           </div>
           <div className="mt-5 border-t border-line pt-4">
-            <div className="mb-2 text-[12.5px] font-medium text-ink-2">Audience</div>
-            <div className="flex h-2 overflow-hidden rounded-full bg-canvas-2" aria-hidden><span className="bg-cobalt" style={{ width: `${c.female}%` }} /></div>
-            <div className="mt-1.5 flex justify-between text-[12px] tabular-nums text-mute"><span>{c.female}% women</span><span>{100 - c.female}% men</span></div>
+            <div className="mb-2 text-[12.5px] font-medium text-ink-2">{c.female != null ? "Audience" : "Niches"}</div>
+            {c.female != null && <>
+              <div className="flex h-2 overflow-hidden rounded-full bg-canvas-2" aria-hidden><span className="bg-cobalt" style={{ width: `${c.female}%` }} /></div>
+              <div className="mt-1.5 flex justify-between text-[12px] tabular-nums text-mute"><span>{c.female}% women</span><span>{100 - c.female}% men</span></div>
+            </>}
             <div className="mt-3 flex flex-wrap gap-1.5">{c.categories.map((k) => <span key={k} className="chip">{k}</span>)}</div>
           </div>
         </div>

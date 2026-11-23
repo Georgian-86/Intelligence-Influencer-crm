@@ -78,6 +78,7 @@ export async function refreshMyInstagram(accountId: string): Promise<Result & { 
   if (recent) return { ok: false, error: "Synced less than an hour ago — try again later." };
   const res = await syncInstagramAccount(acc.id);
   revalidatePath("/dashboard", "layout");
+  if (res.ok && "cached" in res) return { ok: false, error: "Your stats are already saved. Live refresh from Instagram is paused for now." };
   return res.ok ? { ok: true, syncedAt: new Date().toISOString(), message: "Synced from Instagram" } : { ok: false, error: res.error };
 }
 
@@ -133,4 +134,35 @@ export async function updateProfile(patch: ProfilePatch): Promise<Result> {
   }
   revalidatePath("/dashboard", "layout");
   return { ok: true, message: "Saved" };
+}
+
+/* ------------------------------------------------------------------ deliverables */
+const rpcError = (m: string) => (/row-level security|permission denied|Not your deliverable/i.test(m) ? "This isn't one of your deliverables." : m);
+
+/** New draft version: a link (Drive / Instagram / YouTube) or a file already uploaded to storage. */
+export async function submitDraft(deliverableId: string, input: { caption?: string; link?: string; storagePath?: string; note?: string }): Promise<Result> {
+  if (isDemo()) {
+    await new Promise((r) => setTimeout(r, 500));
+    return { ok: true, message: "Draft submitted. Vigor reviews within 24h." };
+  }
+  const link = input.link?.trim() || null;
+  if (link && !/^https?:\/\/\S+\.\S+/.test(link)) return { ok: false, error: "Paste a full link, e.g. https://drive.google.com/…" };
+  if (!link && !input.storagePath) return { ok: false, error: "Choose a file or paste a link." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("submit_deliverable", {
+    p_id: deliverableId, p_caption: input.caption?.slice(0, 2200) ?? null, p_media_url: link, p_storage_path: input.storagePath ?? null, p_note: input.note?.slice(0, 2000) ?? null,
+  });
+  if (error) return { ok: false, error: rpcError(error.message) };
+  revalidatePath("/dashboard", "layout");
+  return { ok: true, message: `Version ${data} submitted. Vigor reviews within 24h.` };
+}
+
+/** After approval: the creator posts and pastes the live Instagram / YouTube link. */
+export async function submitLiveLink(deliverableId: string, url: string): Promise<Result> {
+  if (isDemo()) return { ok: true, message: "Live link saved. Payout unlocks once Vigor verifies the post." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("submit_live_link", { p_id: deliverableId, p_url: url.trim() });
+  if (error) return { ok: false, error: rpcError(error.message) };
+  revalidatePath("/dashboard", "layout");
+  return { ok: true, message: "Live link saved. Your payout is processed once everything on this booking is live." };
 }

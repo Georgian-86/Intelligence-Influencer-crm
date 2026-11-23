@@ -4,6 +4,7 @@ import { Logo } from "@/components/brand/logo";
 import { AUTH_SHOWCASE } from "@/lib/demo/creator";
 import { AuthForm } from "./auth-form";
 import { BrandPanel } from "./brand-panel";
+import { DemoPersonas } from "./demo-personas";
 
 type Notice = { kind: "ok" | "error"; text: string } | null;
 
@@ -45,6 +46,7 @@ export function AuthScreen({ mode, next, type, notice, demo }: { mode: "register
             </p>
           )}
 
+          {demo && !register && <DemoPersonas next={next} />}
           <div className="mt-8"><AuthForm mode={mode} next={next} type={type} demo={demo} /></div>
 
           <p className="mt-8 flex items-start gap-2 text-[12.5px] leading-relaxed text-mute">

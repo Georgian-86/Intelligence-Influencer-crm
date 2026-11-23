@@ -1,9 +1,25 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isDemo } from "@/lib/demo";
+import { DEMO_COOKIE, PERSONA_HOME, isPersona, personaForPath, type DemoPersona } from "@/lib/demo/persona";
+
+/** Demo mode: "sign in" as one persona. Real auth never touches this cookie. */
+async function setDemoPersona(p: DemoPersona) {
+  (await cookies()).set(DEMO_COOKIE, p, { path: "/", httpOnly: true, sameSite: "lax", maxAge: 60 * 60 * 24 * 7 });
+}
+
+export async function demoSignIn(formData: FormData) {
+  if (!isDemo()) redirect("/login");
+  const persona = formData.get("persona");
+  if (!isPersona(persona)) redirect("/login");
+  await setDemoPersona(persona);
+  const next = safeNext(formData.get("next"), PERSONA_HOME[persona]);
+  const need = personaForPath(next);
+  redirect(need === persona || need === "any" ? next : PERSONA_HOME[persona]);
+}
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -30,7 +46,7 @@ function toE164(raw: string) {
 /** Primary path (D2): Google OAuth. New accounts land on onboarding, returning users on `next`. */
 export async function signInWithGoogle(formData: FormData) {
   const next = safeNext(formData.get("next"), "/onboarding");
-  if (isDemo()) redirect(next);
+  if (isDemo()) { await setDemoPersona("creator"); redirect(next); }
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -65,6 +81,7 @@ export async function verifyPhoneOtp(phone: string, token: string, next: string)
   const dest = safeNext(next, "/onboarding");
   if (code.length !== 6) return { ok: false, error: "Enter the 6-digit code." };
   if (isDemo()) {
+    await setDemoPersona("creator");
     await new Promise((r) => setTimeout(r, 600));
     return { ok: true, redirectTo: dest };
   }
@@ -81,6 +98,7 @@ export async function sendMagicLink(email: string, next: string): Promise<Result
   const e = email.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return { ok: false, error: "Enter a valid email address." };
   if (isDemo()) {
+    await setDemoPersona("creator");
     await new Promise((r) => setTimeout(r, 600));
     return { ok: true };
   }
@@ -101,7 +119,7 @@ export async function signIn(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const next = safeNext(formData.get("next"), "/dashboard");
-  if (isDemo()) redirect(next);
+  if (isDemo()) { await setDemoPersona("creator"); redirect(next); }
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
@@ -124,7 +142,7 @@ export async function signUp(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const back = `/register?type=${type}`;
-  if (isDemo()) redirect(`/onboarding?type=${type}`);
+  if (isDemo()) { await setDemoPersona("creator"); redirect(`/onboarding?type=${type}`); }
   if (!fullName || !email || password.length < 8) {
     redirect(`${back}&error=${encodeURIComponent("Enter your name, email and a password of at least 8 characters.")}`);
   }
@@ -143,7 +161,7 @@ export async function signUp(formData: FormData) {
 }
 
 export async function signOut() {
-  if (isDemo()) redirect("/");
+  if (isDemo()) { (await cookies()).delete(DEMO_COOKIE); redirect("/"); }
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/");

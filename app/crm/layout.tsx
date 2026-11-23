@@ -1,5 +1,6 @@
 import { AppShell, type NavItem } from "@/components/app-shell";
-import { getAccess, getUser, requireAgency } from "@/lib/session";
+import { getAccess, getUser, hasTalentProfile, requireAgency } from "@/lib/session";
+import { signOut } from "@/app/auth-actions";
 import { isDemo } from "@/lib/demo";
 import { Toaster } from "@/components/crm/toast";
 import { listEnquiries } from "./_lib/data";
@@ -10,8 +11,11 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
   const access = await getAccess();
   const enquiries = await listEnquiries().catch(() => []);
   const newEnquiries = enquiries.filter((e) => e.status === "new").length;
-  const links = [{ href: "/dashboard", label: "My talent dashboard" }];
-  if (access.some((a) => a.orgType === "platform")) links.unshift({ href: "/admin", label: "Admin panel" });
+  // Switch links follow the user's real memberships only.
+  const links: { href: string; label: string }[] = [];
+  if (access.some((a) => a.orgType === "platform")) links.push({ href: "/admin", label: "Admin panel" });
+  if (access.some((a) => a.orgType === "brand")) links.push({ href: "/brand", label: "Brand portal" });
+  if (await hasTalentProfile()) links.push({ href: "/dashboard", label: "My talent dashboard" });
   const demo = isDemo();
   const nav: NavItem[] = [
     { href: "/crm", label: "Today", icon: "House", group: "Workspace" },
@@ -25,10 +29,10 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
     <AppShell
       area="CRM"
       orgName={agency.orgName}
-      // Demo mode signs everyone in as the creator fixture; the CRM speaks as an account manager.
       userName={demo ? "Kunal Shah" : undefined}
       email={demo ? "kunal@vigorlaunchpad.com" : user?.email}
       switchLinks={links}
+      signOutAction={signOut}
       nav={nav}
     >
       {children}
@@ -36,3 +40,6 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
     </AppShell>
   );
 }
+
+/** Instagram fetches (Apify) take 10–30s; give server actions on these pages time to finish. */
+export const maxDuration = 60;

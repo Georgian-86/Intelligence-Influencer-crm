@@ -47,3 +47,6 @@ export default async function Onboarding({ searchParams }: { searchParams: Promi
     />
   );
 }
+
+/** Instagram fetches (Apify) take 10–30s; give server actions on these pages time to finish. */
+export const maxDuration = 60;

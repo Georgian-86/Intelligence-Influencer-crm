@@ -13,10 +13,12 @@ export type BrandAccess = OrgAccess & { userName: string; email?: string; demo: 
  */
 export async function requireBrand(): Promise<BrandAccess> {
   if (isDemo()) {
+    await requireUser("/brand");
     const access = await getAccess();
     const brand = access.find((a) => a.orgType === "brand");
+    if (!brand) redirect("/no-access?area=brand");
     return {
-      ...(brand ?? { orgId: "demo-brand", orgType: "brand", role: "brand_admin", perms: new Set(["*"]) }),
+      ...brand,
       orgName: BRAND_ORG.name,
       userName: BRAND_ORG.contact,
       email: BRAND_ORG.email,

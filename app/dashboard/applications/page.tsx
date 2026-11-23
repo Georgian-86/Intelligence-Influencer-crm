@@ -76,7 +76,12 @@ export default async function Applications() {
                         <span className="font-semibold">Next: </span>{a.next}
                       </div>
 
-                      {a.stage === "confirmed" && <div className="mt-4"><SubmissionBox due={a.deliverableDue} what={a.deliverables} /></div>}
+                      {a.work && a.work.length > 0
+                        ? (a.stage === "confirmed" || a.stage === "delivered") && <div className="mt-4 space-y-3">{a.work.map((w) => <SubmissionBox key={w.id} due={w.due} what={w.title} item={w} />)}</div>
+                        : a.stage === "confirmed" && <div className="mt-4"><SubmissionBox due={a.deliverableDue} what={a.deliverables} /></div>}
+                      {a.payout && a.payout.status !== "pending" && (
+                        <p className="mt-3 text-[12.5px] tabular-nums text-mute">Fee ₹{a.payout.amount.toLocaleString("en-IN")}{a.payout.tds ? ` − TDS ₹${a.payout.tds.toLocaleString("en-IN")}` : ""} = <span className="font-semibold text-ink">₹{a.payout.net.toLocaleString("en-IN")}</span>{a.payout.utr ? ` · UTR ${a.payout.utr}` : ""}</p>
+                      )}
 
                       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 text-[13.5px]">
                         <span className={clsx("inline-flex items-center gap-2 font-medium", pay.tone)}>
